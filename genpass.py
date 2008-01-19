@@ -4,7 +4,6 @@
 	date: 2004-10-20
 	author: Marcin Sztolcman <marcin@urzenia.net>
 	license: GPL
-	desc: generowanie hasel z podanych zakresow znakow
 """
 
 import random, sys
