@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# Author: Marcin Sztolcman <http://urzenia.net>
+# License: GPL v.2
+# Copyright: (r) 2008
+
 import os.path
 import re
 import subprocess
@@ -37,7 +41,7 @@ class MetacityKeybindingsEditor (object):
 			self.current_keybindings[m]['action'] = v
 
 	def zenity_list (self):
-		cmd	= ['/usr/bin/zenity', '--title='+self.TITLE, '--width=700', '--height=420', '--list', '--print-column=ALL', '--text=Wybierz komendę do edycji i kliknij "OK" (aby zakończyć kliknij anuluj):', '--column=Komenda', '--column=Akcja', '--column=Skrót']
+		cmd	= ['/usr/bin/zenity', '--title='+self.TITLE, '--width=700', '--height=420', '--list', '--print-column=ALL', '--text=Select command to edit and click "OK" (click "Cancel" to finish):', '--column=Command', '--column=Action', '--column=Keybinding']
 		for d in self.current_keybindings.keys ():
 			cmd += [str (d), self.current_keybindings[d]['action'], self.current_keybindings[d]['keybinding']]
 
@@ -47,13 +51,13 @@ class MetacityKeybindingsEditor (object):
 		return ret
 
 	def zenity_action (self, data):
-		cmd		= ['/usr/bin/zenity', '--title='+self.TITLE, '--entry', '--entry-text='+data, '--text=Podaj pełną ścieżkę do aplikacji wraz z parametrami:']
+		cmd		= ['/usr/bin/zenity', '--title='+self.TITLE, '--entry', '--entry-text='+data, '--text=Get full path to application:']
 
 		ret = self.system (cmd)[0].strip ()
 		return ret
 
 	def zenity_keybinding (self, data):
-		cmd		= ['/usr/bin/zenity', '--title='+self.TITLE, '--entry', '--entry-text='+data, '--text=Podaj skrót jaki chcesz przypisać do wybranej akcji (klawisze specjale: <Control>, <Shift>, <Alt>, F1-F12']
+		cmd		= ['/usr/bin/zenity', '--title='+self.TITLE, '--entry', '--entry-text='+data, '--text=Get keybinding to use to start yout application (special keys: <Control>, <Shift>, <Alt>, F1-F12)']
 
 		ret = self.system (cmd)[0].strip ()
 		return ret
