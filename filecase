@@ -4,7 +4,7 @@
 __version__   = 'version 0.2'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
 __copyright__ = __author__ + '(r) 2006'
-__program__   = 'filecase - tool for recurency renaming files to lower/upper case version of their names'
+__program__   = 'filecase - tool for recursive renaming files to lower/upper case version of their names'
 __date__      = '2006-09-15'
 __license__   = 'GPL v.2'
 
