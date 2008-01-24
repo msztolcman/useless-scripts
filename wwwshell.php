@@ -7,10 +7,26 @@
 # $Id$
 # vim: ft=php
 
+# configuration
+# your home directory
 define ('HOME', '/home/mysz');
 
+# your aliases
+$aliases = array (
+	'll'	=> 'ls -l',
+	'la'	=> 'ls -la',
+	'..'	=> 'cd ..',
+	'...'	=> 'cd ../..',
+	'pax'	=> 'ps awux',
+	'paxg'	=> 'ps awux | grep',
+	'g'		=> 'grep',
+	'gi'	=> 'grep -i',
+	'gr'	=> 'grep -ir',
+);
 
 
+
+# do not touch below this line - except you exactly now what are you doing...
 putenv ('HOME='.HOME);
 
 error_reporting (E_ALL|E_STRICT);
@@ -24,7 +40,6 @@ function str_entit ($str) {
 		'>' => '&gt;',
 		'"' => '&quot;',
 		"\r" => '',
-		"\n" => "<br />\n",
 	);
 	return strtr ($str, $pat);
 }
@@ -34,11 +49,41 @@ function debug () {
 
 	$i = 0;
 	foreach ($args as $arg) {
-		echo ++$i .'. ';
-		print_r ($arg);
-		echo "\n";
+		printf ("%d. %s\n", ++$i, print_r ($arg, 1));
 	}
 	echo '</pre>';
+}
+function expand_alias ($command) {
+	$length = strcspn ($command, " \t");
+	$cmd = substr ($command, 0, $length);
+
+	if (isset ($GLOBALS['aliases'][$cmd])) {
+		return $GLOBALS['aliases'][$cmd] . substr ($command, $length);
+	}
+	return $command;
+}
+
+function execute ($command) {
+	$output = array ();
+	$res = proc_open ($command, array (
+			1 => array('pipe', 'w'),
+			2 => array('pipe', 'w')
+		), $output);
+
+	$return = array ('stderr' => '', 'stdout' => '');
+    while (!feof($output[1])) {
+        $return['stdout'] .= fgets($output[1]);
+    }
+
+    while (!feof($output[2])) {
+        $return['stderr'] .= fgets($output[2]);
+    }
+
+    fclose($output[1]);
+    fclose($output[2]);
+    proc_close($res);
+
+	return $return;
 }
 
 $results = '';
@@ -54,7 +99,7 @@ if (isset ($_SESSION['results'])) {
 
 # set cwd
 if (!isset ($_SESSION['cwd'])) {
-	$_SESSION['cwd'] = getcwd ();
+	$_SESSION['cwd'] = getenv ('HOME') ? getenv ('HOME') : getcwd ();
 }
 # chdir to stored value
 else {
@@ -72,8 +117,10 @@ if (isset ($_GET['command']) && $_GET['command']) {
 	$command = str_replace (array ("\r", "\n"), array ('', ' '), $command);
 
 	# default values
-	$return	= '';
-	$code	= 0;
+	$return	= array ('stdout' => '', 'stderr' => '');
+
+	# aliases
+	$command = expand_alias ($command);
 
 	# cd - we change directory
 	if (preg_match ('#^\s*cd(?:\s+(.*))?#', $command, $match)) {
@@ -87,32 +134,34 @@ if (isset ($_GET['command']) && $_GET['command']) {
 				$_SESSION['cwd'] = $cwd;
 			}
 			else {
-				$return	= sprintf ('Cannot change directory to "%s".', $cwd);
-				$code	= 1;
+				$return['stderr'] = sprintf ('Cannot change directory to "%s".', $cwd);
 			}
 		}
 		else {
-			$return	= sprintf ('Cannot change directory to "%s".', $cwd);
-			$code	= 1;
+			$return['stderr'] = sprintf ('Cannot change directory to "%s".', $cwd);
 		}
 	}
 
 	# other command
 	else {
-		exec ($command.' 2>&1', $return, $code);
+		$return = execute ($command);
+		foreach (array ('stdout', 'stderr') as $io) {
+			if (!isset ($return[$io])) {
+				continue;
+			}
 
-		$return		= join ("\n", $return);
-		$return		= str_replace (array (' ', "\t", "\n"), array ('&nbsp;', '&nbsp;&nbsp;&nbsp;&nbsp;', "<br />\n"), $return);
+			$return[$io] = str_entit ($return[$io]);
+			$return[$io] = str_replace (array (' ', "\t", "\n"), array ('&nbsp;', '&nbsp;&nbsp;&nbsp;&nbsp;', "<br />\n"), $return[$io]);
+		}
 	}
-
 
 	# prepare results
-	$results	.= '<p class="output_command">'. $_SESSION['cwd'] .' % '.str_entit ($_GET['command'])."</p>\n";
-	if ($code > 0) {
-		$results .= '<p class="output_error">'. $return ."</p>\n";
+	$results	.= '<p class="output_command">'. $_SESSION['cwd'] .' $ '.str_entit ($_GET['command'])."</p>\n";
+	if ($return['stdout']) {
+		$results .= '<p class="output_correct">'. $return['stdout'] ."</p>\n";
 	}
-	else {
-		$results .= '<p class="output_correct">'. $return ."</p>\n";
+	if ($return['stderr']) {
+		$results .= '<p class="output_error">'. $return['stderr'] ."</p>\n";
 	}
 
 	# store results in session
@@ -164,8 +213,7 @@ if (isset ($_GET['command']) && $_GET['command']) {
 			}
 			#results {
 				width: 90%;
-				max-height: 300px;
-				min-height: 100px;
+				height: 300px;
 				margin: 0 auto 10px auto;
 				border: 1px solid black;
 				padding: 10px;
