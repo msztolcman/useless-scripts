@@ -183,6 +183,9 @@ if (isset ($_GET['command']) && $_GET['command']) {
 					document.getElementById ('fontUp').onclick = function () {
 						fontSize ("+1");
 					}
+					document.getElementById ('fontStd').onclick = function () {
+						fontSize ("12");
+					}
 				}
 				window.onload = function () {
 					scrollResults ();
@@ -199,8 +202,11 @@ if (isset ($_GET['command']) && $_GET['command']) {
 					if (value[1] == '-') {
 						fs -= parseInt (value[2]);
 					}
-					else {
+					else if (value[1] == '+') {
 						fs += parseInt (value[2]);
+					}
+					else {
+						fs = parseInt (value[2]);
 					}
 
 					e.style.fontSize = fs + 'px';
@@ -248,7 +254,10 @@ if (isset ($_GET['command']) && $_GET['command']) {
 		</style>
 	</head>
 	<body>
-		<div id="navi"><span class="navi" id="fontDown">A--</span> <span class="navi" id="fontUp">A++</span></div>
+		<div id="navi">
+			<span class="navi" id="fontDown" title="Shrink font size in results window">--A</span>
+			<span class="navi" id="fontStd" title="Reset font size in results window">A</span>
+			<span class="navi" id="fontUp" title="Enlarge font size in results window">A++</span></div>
 		<div id="results"><?php echo $results; ?></div>
 		<div id="cwd">&gt; <?php echo str_entit ($_SESSION['cwd']); ?></div>
 		<form method="get" action="">
