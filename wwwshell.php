@@ -107,7 +107,7 @@ else {
 }
 
 
-if (isset ($_GET['command']) && $_GET['command']) {
+if (isset ($_GET['execute']) && isset ($_GET['command']) && $_GET['command']) {
 	# magic_quotes_gpc :/
 	if (get_magic_quotes_gpc ()) {
 		$_GET['command'] = stripslashes ($_GET['command']);
