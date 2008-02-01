@@ -18,11 +18,12 @@ version %(version)s (%(date)s)''' % {
   'date': __date__
 }
 
+STANDARD_F='644'
+STANDARD_D='755'
+
 
 
 import os, os.path, sys, getopt, pwd, grp
-STANDARD_F='644'
-STANDARD_D='755'
 
 usage = dict(
   s = u'Usage: %(name)s [--dir-perm=perm] [--file-perm=perm] [--standard] [--both-perm=perm] [--owner=name] [--owner-affect=all|file|dir] [--group=group] [--group-affect=all|file|dir] [--omit-rootdir] [--version] [--help] directory' % dict(name=os.path.basename(sys.argv[0])),
@@ -47,8 +48,6 @@ OPTIONS:
 ''' % dict(name=os.path.basename(sys.argv[0]))
 )
 
-
-
 class Settings(object):
   __s = {}
   def __setattr__(self, k, v):
@@ -63,8 +62,6 @@ class Settings(object):
       self.__s.update(v)
   def __str__(self):
     return "\n".join( ["%s: %s" % i for i in self.__s.items()] )
-
-
 
 def exit(msg, code = 0):
   print usage['s']
@@ -214,6 +211,7 @@ def main():
   if omitted:
     print 'Failed:'
     print "\n".join(omitted)
+
 
 if __name__ == '__main__':
   main()
