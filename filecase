@@ -21,7 +21,15 @@ version %(version)s (%(date)s)''' % {
 
 
 
-import os, os.path, sys, getopt, glob, re, copy, time, md5, string
+import os, os.path,
+import sys
+import getopt
+import glob
+import re
+import copy
+import time
+import md5
+import string
 
 usage = dict(
   s = u'Usage: %s [--exists=ask|delete|skip] [--recursive] [--mask=*.*] [--regexp=regexp] [--exclude] [--size=size] --lower|upper|swap directory' % os.path.basename(sys.argv[0]),
@@ -269,6 +277,7 @@ def init():
 
   # let's go!
   renameFiles(v.path, v)
+
 
 if __name__ == '__main__':
   init()
