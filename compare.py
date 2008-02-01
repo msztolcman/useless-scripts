@@ -267,7 +267,7 @@ try:
   print "==                                  =="
   print "======================================"
   print "======================================"
-  
+
   #sa nowe katalogi ?
   print_result('Added folders', dst_directories, src_directories)
   #usuwamy katalogi ?
