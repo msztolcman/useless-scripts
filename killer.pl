@@ -113,6 +113,9 @@ package Killer;
 
 		window.onload = function () {
 			colorize ();
+			if ({AUTO_REFRESH}) {
+				setTimeout (function () { document.getElementById ("refresh").click () }, {AUTO_REFRESH} * 1000);
+			}
 		}
 	</script>
 	<style type="text/css">
@@ -141,6 +144,13 @@ package Killer;
 		.selected {
 			background-color: #888;
 		}
+		#ps_options {
+			width: 10em;
+		}
+		#auto_refresh {
+			width: 3em;
+			text-align: right;
+		}
 	</style>
 </head>
 <body>
@@ -155,8 +165,9 @@ package Killer;
 		<tfoot>
 			<tr>
 				<td colspan="{COLUMNS_QUANT}" style="text-align: center">
-					<input type="text" name="ps_options" value="{PS_OPTIONS}" />
-					<input type="submit" name="refresh" value="Odśwież" />
+					<input type="text" id="ps_options" name="ps_options" value="{PS_OPTIONS}" />
+					<input type="text" id="auto_refresh" name="auto_refresh" value="{AUTO_REFRESH}" />
+					<input type="submit" name="refresh" id="refresh" value="Odśwież" />
 					<input type="submit" name="submit" value="KILL!" onclick="return confirm (\'Are you really sure?!\')" />
 					<select name="signal">
 						{SELECT_SIGNALS}
@@ -399,7 +410,6 @@ package Killer;
 				$_
 			)
 		} sort keys %signals;
-#        } sort {$signals{$a} <=> $signals{$b}} keys %signals;
 		return join ("\n", @options);
 	}
 
@@ -423,15 +433,17 @@ package Killer;
 	sub render {
 		my ($self, $data) = @_;
 
+		my $arefresh = int ($$self{request}{auto_refresh});
 		my %data = (
-			ROOT			=> $$self{root},
-			TABLE_HEADERS	=> $self->_render__table_headers ($$self{root}),
-			COLUMNS_QUANT	=> scalar (keys %{$$self{fields}}) + 1,
-			SELECT_SIGNALS	=> $self->_render__select_signals (),
-			GET_SORT		=> $$self{request}{'sort'},
-			GET_SORT_BY		=> $$self{request}{sort_by},
-			TABLE_BODY		=> $self->_render__table_body ($data),
-			PS_OPTIONS		=> $$self{request}{ps_options},
+			ROOT				=> $$self{root},
+			TABLE_HEADERS		=> $self->_render__table_headers ($$self{root}),
+			COLUMNS_QUANT		=> scalar (keys %{$$self{fields}}) + 1,
+			SELECT_SIGNALS		=> $self->_render__select_signals (),
+			GET_SORT			=> $$self{request}{'sort'},
+			GET_SORT_BY			=> $$self{request}{sort_by},
+			TABLE_BODY			=> $self->_render__table_body ($data),
+			PS_OPTIONS			=> $$self{request}{ps_options},
+			AUTO_REFRESH		=> $arefresh,
 		);
 
 		my $ret = $template;
