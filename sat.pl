@@ -1,12 +1,12 @@
 #!/usr/bin/env perl
 
 # $Id$
-my $__version__   = 'version 0.2'
-my $__author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
-my $__copyright__ = '(r) 2008'
-my $__program__   = 'sat.pl - simple static analysis tool'
-my $__date__      = '2008-07-08'
-my $__license__   = 'GPL v.2'
+my $__version__   = 'version 0.3';
+my $__author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>';
+my $__copyright__ = '(r) 2008';
+my $__program__   = 'sat.pl - simple static analysis tool';
+my $__date__      = '2008-07-08';
+my $__license__   = 'GPL v.2';
 
 use strict;
 use warnings;
@@ -18,20 +18,20 @@ sub SEEK_SET { 0 }
 sub SEEK_CUR { 1 }
 sub SEEK_END { 2 }
 
-# funkcje wyjścia
+# funkcje wyjscia
 sub display_html {
 	my ($subs) = @_;
 
 	my ($sub, $data, $fname, );
 
 	foreach $sub (sort keys (%$subs)) {
-		printf ("Plik: %s<br />\nFunkcja: %s<br />\n", $$subs{$sub}[0], $sub);
+		printf ("Path: %s<br />\nLine: %d<br />\nSubroutine name: %s<br />\n", $$subs{$sub}[0], $$subs{$sub}[2], $sub);
 
 		if (%{$$subs{$sub}[1]}) {
-			print "Wywoływana w:<br />\n";
+			print "Called in:<br />\n";
 			foreach $fname (sort keys %{$$subs{$sub}[1]}) {
 				foreach $data (sort keys %{$$subs{$sub}[1]{$fname}}) {
-					printf ("&nbsp;&nbsp;&nbsp;&nbsp;%s::%s - linie: %s<br />\n", $fname, $data, join (', ', @{$$subs{$sub}[1]{$fname}{$data}}));
+					printf ("&nbsp;&nbsp;&nbsp;&nbsp;%s::%s - lines: %s<br />\n", $fname, $data, join (', ', @{$$subs{$sub}[1]{$fname}{$data}}));
 				}
 			}
 		}
@@ -48,13 +48,13 @@ sub display_console {
 	my ($sub, $data, $fname, );
 
 	foreach $sub (sort keys (%$subs)) {
-		printf ("Plik: %s\nFunkcja: %s\n", $$subs{$sub}[0], $sub);
+		printf ("Path: %s\nLine: %d\nSubroutine name: %s\n", $$subs{$sub}[0], $$subs{$sub}[2], $sub);
 
 		if (%{$$subs{$sub}[1]}) {
-			print "Wywoływana w:\n";
+			print "Called in:\n";
 			foreach $fname (sort keys %{$$subs{$sub}[1]}) {
 				foreach $data (sort keys %{$$subs{$sub}[1]{$fname}}) {
-					printf ("\t%s::%s - linie: %s\n", $fname, $data, join (', ', @{$$subs{$sub}[1]{$fname}{$data}}));
+					printf ("\t%s::%s - lines: %s\n", $fname, $data, join (', ', @{$$subs{$sub}[1]{$fname}{$data}}));
 				}
 			}
 		}
@@ -72,28 +72,30 @@ sub display_raw {
 	return;
 }
 
-
-# parsowanie plików
+my $rxp_fun = qr/^\s*sub\s+(\w+)\s*(?:\([^)]*\)\s*)?\{/;
+# parsowanie plikow
 sub parse_files {
 
 	my (%fh, $fh, $line, $subs, $sub, $curr_sub, $lineno, $fname, $lsub, );
 	foreach $fname (@_) {
-		open ($fh, '<', $fname) or die (sprintf ('Nie powiodło się otworzenie pliku "%s".', $fname));
+		open ($fh, '<', $fname) or die (sprintf ('Cannot open file "%s".', $fname));
 
 		# wyszukujemy wszystkie zdefiniowane funkcje
 		while ($line = <$fh>) {
-			next if ($line !~ /^\s*sub\s+(\w+)\s*\{/);
+			++$lineno;
+			next if ($line !~ /$rxp_fun/);
 			next if ($1 eq 'main');
-			$$subs{$1} = [$fname, {}];
+			$$subs{$1} = [$fname, {}, $lineno];
 		}
 
-		# wracamy na początek pliku
+		# wracamy na poczatek pliku
 		seek ($fh, 0, SEEK_SET);
 
 		$fh{$fname} = $fh;
 		undef ($fh);
 	}
 
+    $lineno = 0;
 	foreach $fname (sort keys %fh) {
 		$fh = $fh{$fname};
 
@@ -103,13 +105,13 @@ sub parse_files {
 			++$lineno;
 			next if ($line =~ /\s*#/);
 
-			# sprawdzamy i zapamiętujemy curr_sub
-			if ($line =~ /^\s*sub\s+(\w+)\s*\{/) {
+			# sprawdzamy i zapamietujemy curr_sub
+			if ($line =~ /$rxp_fun/) {
 				$curr_sub = $1;
 				next;
 			}
 
-			# szukamy w bieżącej linii wystąpienia dowolnej z naszych metod
+			# szukamy w biezacej linii wystapienia dowolnej z naszych metod
 			foreach $sub (keys %$subs) {
 				if ($line =~ /[^\$\%\@\w]$sub\b/) {
 					push (@{ $$subs{$sub}[1]{$fname}{$curr_sub} ||= [] }, $lineno);
@@ -127,7 +129,7 @@ sub parse_files {
 	return wantarray ? %$subs : $subs;
 }
 
-# parsowanie argumentów
+# parsowanie argumentow
 my ($display, @files, $ret, );
 if (@ARGV >= 3 && $ARGV[0] =~ /^(?:-f|--format)$/) {
 	$display = $ARGV[1];
@@ -139,24 +141,25 @@ else {
 }
 
 if (!@files) {
-	print STDERR "Nie podałeś plików do parsowania.\n";
+	print STDERR "Missing files.\n";
 	exit 1;
 }
 
 if (!defined (&{'display_'.$display})) {
-	print STDERR "Nieznany format wyjścia.\n";
+	print STDERR "Unknown format.\n";
 	exit 2;
 }
 $display = \&{'display_'.$display};
 
-# wyświetlenie wyników
+# wyswietlenie wynikow
 eval {
 	$ret = parse_files (@files);
 };
 if ($@) {
-	print STDERR 'Wystapił błąd podczas parsowania pliku: '. $@;
+	print STDERR 'Some error occured - cannot parse file.';
 	exit 3;
 }
 
 &$display ($ret);
 
+# vim: enc=utf-8 ft=perl
