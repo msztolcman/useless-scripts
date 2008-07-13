@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # $Id$
-__version__   = 'version 0.2'
+__version__   = 'version 0.3'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
 __copyright__ = __author__ + '(r) 2006'
 __program__   = 'filecase - tool for recursive renaming files to lower/upper case version of their names'
-__date__      = '2006-09-15'
+__date__      = '2008-04-11'
 __license__   = 'GPL v.2'
 
 __desc__      = '''%(desc)s
@@ -21,7 +21,7 @@ version %(version)s (%(date)s)''' % {
 
 
 
-import os, os.path,
+import os, os.path
 import sys
 import getopt
 import glob
@@ -209,8 +209,8 @@ class Settings(object):
 
 def init():
   # getting script argument
-  s_args = 'he:rm:g:lusxi:'
-  l_args = ('help', 'exists=', 'recursive', 'mask=', 'regexp=', 'lower', 'upper', 'swap', 'exclude', 'size=')
+  s_args = 'he:rm:g:lusxi:v'
+  l_args = ('help', 'exists=', 'recursive', 'mask=', 'regexp=', 'lower', 'upper', 'swap', 'exclude', 'size=', 'version')
   try:
     opts, args = getopt.gnu_getopt(sys.argv[1:], s_args, l_args)
   except getopt.GetoptError, msg:
@@ -231,6 +231,9 @@ def init():
   for o, a in opts:
     if o in ('-h', '--help'):
       print usage['l']
+      raise SystemExit
+    if o in ('-v', '--version'):
+      print __desc__
       raise SystemExit
     elif o in ('-e', '--exists'):
       a = a.lower()

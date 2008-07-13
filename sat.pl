@@ -24,7 +24,7 @@ sub display_html {
 
 	my ($sub, $data, $fname, );
 
-	foreach $sub (sort keys (%$subs)) {
+	foreach $sub (sort { $$subs{$a}[0] cmp $$subs{$b}[0] or $a cmp $b } keys (%$subs)) {
 		printf ("Path: %s<br />\nLine: %d<br />\nSubroutine name: %s<br />\n", $$subs{$sub}[0], $$subs{$sub}[2], $sub);
 
 		if (%{$$subs{$sub}[1]}) {
@@ -47,7 +47,7 @@ sub display_console {
 
 	my ($sub, $data, $fname, );
 
-	foreach $sub (sort keys (%$subs)) {
+	foreach $sub (sort { $$subs{$a}[0] cmp $$subs{$b}[0] or $a cmp $b } keys (%$subs)) {
 		printf ("Path: %s\nLine: %d\nSubroutine name: %s\n", $$subs{$sub}[0], $$subs{$sub}[2], $sub);
 
 		if (%{$$subs{$sub}[1]}) {
@@ -79,6 +79,8 @@ sub parse_files {
 	my (%fh, $fh, $line, $subs, $sub, $curr_sub, $lineno, $fname, $lsub, );
 	foreach $fname (@_) {
 		open ($fh, '<', $fname) or die (sprintf ('Cannot open file "%s".', $fname));
+
+		$lineno = 0;
 
 		# wyszukujemy wszystkie zdefiniowane funkcje
 		while ($line = <$fh>) {
@@ -156,7 +158,7 @@ eval {
 	$ret = parse_files (@files);
 };
 if ($@) {
-	print STDERR 'Some error occured - cannot parse file.';
+	print STDERR 'Some error occured - cannot parse file: ' . $@;
 	exit 3;
 }
 
