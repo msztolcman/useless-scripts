@@ -2,7 +2,7 @@
 # Author: Marcin Sztolcman <http://urzenia.net/>
 # Copyright: (c) 2008
 # License: GPL v.2
-# Version: 0.1
+# Version: 0.2
 #
 # $Id$
 # vim: ft=php
@@ -10,7 +10,8 @@
 # configuration
 # your home directory
 define ('HOME', '/home/mysz');
-
+# how many commands store in history
+define ('HISTORY_MAX', 30);
 # your aliases
 $aliases = array (
 	'll'	=> 'ls -l',
@@ -27,9 +28,9 @@ $aliases = array (
 
 
 # do not touch below this line - except you exactly now what are you doing...
-putenv ('HOME='.HOME);
+# putenv ('HOME='.HOME);
 
-error_reporting (E_ALL|E_STRICT);
+error_reporting (E_ALL | E_STRICT);
 if (!session_id ()) {
 	session_start ();
 }
@@ -87,7 +88,7 @@ function execute ($command) {
 }
 
 $results = '';
-# cleat output console
+# clear output console
 if (isset ($_GET['clear'])) {
 	$_SESSION['results'] = $results;
 }
@@ -95,6 +96,11 @@ if (isset ($_GET['clear'])) {
 # prepend console history
 if (isset ($_SESSION['results'])) {
 	$results .= $_SESSION['results'];
+}
+
+# commands history
+if (!isset ($_SESSION['history']) || !is_array ($_SESSION['history'])) {
+    $_SESSION['history'] = array ();
 }
 
 # set cwd
@@ -105,7 +111,6 @@ if (!isset ($_SESSION['cwd'])) {
 else {
 	@chdir ($_SESSION['cwd']);
 }
-
 
 if (isset ($_GET['execute']) && isset ($_GET['command']) && $_GET['command']) {
 	# magic_quotes_gpc :/
@@ -118,6 +123,14 @@ if (isset ($_GET['execute']) && isset ($_GET['command']) && $_GET['command']) {
 
 	# default values
 	$return	= array ('stdout' => '', 'stderr' => '');
+
+	# we store few last commands
+    $tmp_cmd = sprintf ('"%s"', addslashes ($command));
+    if (count ($_SESSION['history']) && $_SESSION['history'][0] != $tmp_cmd) {
+        array_unshift ($_SESSION['history'], $tmp_cmd);
+    }
+    $_SESSION['history'] = array_splice ($_SESSION['history'], 0, HISTORY_MAX);
+    reset ($_SESSION['history']);
 
 	# aliases
 	$command = expand_alias ($command);
@@ -171,34 +184,44 @@ if (isset ($_GET['execute']) && isset ($_GET['command']) && $_GET['command']) {
 ?><html>
 	<head>
 		<title>wwwShell (c)2008, Marcin Sztolcman</title>
+			<script type="text/javascript" src="http://code.jquery.com/jquery-1.2.6.pack.js"></script>
+			<script type="text/javascript" src="http://dev.jquery.com/view/tags/plugins/autocomplete/1.0.2/jquery.autocomplete.pack.js"></script>
 			<script type="text/javascript">
 				function scrollResults () {
-					e = document.getElementById ('results');
-					e.scrollTop=e.scrollHeight;
+					e = $('#results');
+					e.attr ('scrollTop', e.attr ('scrollHeight'));
 				}
 				function catchNaviFonts () {
-					document.getElementById ('fontDown').onclick = function () {
+					$ ('#fontDown').click (function () {
 						fontSize ("-1");
-					}
-					document.getElementById ('fontUp').onclick = function () {
+					});
+					$ ('#fontUp').click (function () {
 						fontSize ("+1");
-					}
-					document.getElementById ('fontStd').onclick = function () {
+					});
+					$ ('#fontStd').click (function () {
 						fontSize ("12");
-					}
+					});
 				}
-				window.onload = function () {
+                var hist = new Array (<?php echo join (', ', $_SESSION['history']); ?>);
+                $ (function () {
 					scrollResults ();
 					catchNaviFonts ();
-					document.getElementById ('command').focus ();
-				}
+					$('#command').focus ();
+					$('#command').autocomplete (hist, {
+                        'autoFill':     true,
+                        'cacheLength':  <?php echo HISTORY_MAX; ?>,
+                        'max':          <?php echo HISTORY_MAX; ?>,
+                        'minChars':     0
+                    });
+                })
 				function fontSize (offset) {
 					var value = offset.match (/^(\+|-)?(\d+)$/);
 					if (!value) return;
 
-					var styles = window.getComputedStyle (document.getElementById ('results'), null);
-					var fs = styles.fontSize.replace (/px$/, '');
-					fs = parseInt (fs);
+                    var e = $('#results');
+                    var fs = e.css ('font-size').replace (/px$/, '');
+                    fs = parseInt (fs);
+
 					if (value[1] == '-') {
 						fs -= parseInt (value[2]);
 					}
@@ -209,7 +232,7 @@ if (isset ($_GET['execute']) && isset ($_GET['command']) && $_GET['command']) {
 						fs = parseInt (value[2]);
 					}
 
-					e.style.fontSize = fs + 'px';
+					e.css ('font-size', fs);
 				}
 		</script>
 		<style type="text/css">
@@ -228,7 +251,6 @@ if (isset ($_GET['execute']) && isset ($_GET['command']) && $_GET['command']) {
 			}
 			#command {
 				width: 600px;
-				height: 140px;
 				margin: 0 auto;
 			}
 			.output_command {
@@ -251,6 +273,55 @@ if (isset ($_GET['execute']) && isset ($_GET['command']) && $_GET['command']) {
 			.navi {
 				cursor: pointer;
 			}
+            .ac_results {
+	            padding: 0px;
+	            border: 1px solid black;
+	            background-color: white;
+	            overflow: hidden;
+	            z-index: 99999;
+            }
+
+            .ac_results ul {
+	            width: 100%;
+	            list-style-position: outside;
+	            list-style: none;
+	            padding: 0;
+	            margin: 0;
+            }
+
+            .ac_results li {
+	            margin: 0px;
+	            padding: 2px 5px;
+	            cursor: default;
+	            display: block;
+	            /*
+	            if width will be 100% horizontal scrollbar will apear
+	            when scroll mode will be used
+	            */
+	            /*width: 100%;*/
+	            font: menu;
+	            font-size: 12px;
+	            /*
+	            it is very important, if line-height not setted or setted
+	            in relative units scroll will be broken in firefox
+	            */
+	            line-height: 16px;
+	            overflow: hidden;
+            }
+
+            .ac_loading {
+	            background: white url('indicator.gif') right center no-repeat;
+            }
+
+            .ac_odd {
+	            background-color: #eee;
+            }
+
+            .ac_over {
+	            background-color: #0A246A;
+	            color: white;
+            }
+
 		</style>
 	</head>
 	<body>
@@ -261,7 +332,7 @@ if (isset ($_GET['execute']) && isset ($_GET['command']) && $_GET['command']) {
 		<div id="results"><?php echo $results; ?></div>
 		<div id="cwd">&gt; <?php echo str_entit ($_SESSION['cwd']); ?></div>
 		<form method="get" action="">
-			<textarea name="command" id="command"></textarea><br />
+			<input type="text" name="command" id="command" autocomplete="off" /><br />
 			<input type="submit" name="execute" value="Wykonaj" />
 			<input type="submit" name="clear" value="Wyczyść wyjście" />
 		</form>
