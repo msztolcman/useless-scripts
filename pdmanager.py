@@ -171,7 +171,6 @@ def main ():
         -d|--desc some desc     - some additional info (WARNING: \\n string is replaced with new line character!)
         -r|--root path          - directory where store entries files (defaults to ~/.passwd)
         -w|--show-password      - display plain text password (without this password is starred)
-        -d|--debug              -
         -v|--version            - version info
         -h|--help               - this help
     data:
@@ -181,8 +180,7 @@ def main ():
     # calling getopt
     opts_short  = 'hvn:d:l:p:r:w'
     opts_long   = ('help', 'version', 'name=', 'desc=', 'login=', 'password=',
-                    'root=', '--show-password',
-                    'debug')
+                    'root=', '--show-password',)
     try:
         opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
     except getopt.GetoptError, e:
@@ -213,8 +211,6 @@ def main ():
             params['root']   = a
         elif o in ('-w', '--show-password'):
             params['show_passwd'] = True
-        elif o == '--debug':
-            easysqlite.DEBUG = True
 
     # additional validaton of parameters - getopt can't do it
     # if there is no -r parameter, we try to find root
