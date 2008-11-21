@@ -131,7 +131,7 @@ def scan_dir (path, to_skip=[]):
     return data
 
 if __name__ == '__main__':
-    usage = '''%s [-n|--no-human] [-o|--output -] [-t|--threshold 1M] [-s|--show-omitted] [-x|--exclude *str*] [-d|--debug] [-l|--follow-links] [-r|--exclude-regexp ^regexp$]'''
+    usage = '''%s [-n|--no-human] [-o|--output -] [-t|--threshold 1M] [-s|--show-omitted] [-x|--exclude *str*] [-d|--debug] [-l|--follow-links] [-r|--exclude-regexp ^regexp$]''' % (os.path.basename (sys.argv[0]), )
     # parsowanie argumntow
     try:
         opts_short = 'hvno:t:sx:dlr:'

@@ -144,7 +144,7 @@ def main ():
 -o|--output_dir     - specify directory when you want to save downloaded files. If not specified, try to save every subtitle in films directory
 -n|--no-validate    - if given, specified list of films will not be validated for being movie files (work only without -d parameter)
 -s|--skip           - if specified, if any film has subtitle for it, new subtitles will not be searched
-input1 .. inputN    - if -d is not specified, this is treaten like films files, to which you want to download subtitles. In other case, this is list of directories whis are scanned for files'''
+input1 .. inputN    - if -d is not specified, this is treaten like films files, to which you want to download subtitles. In other case, this is list of directories whis are scanned for files''' % (os.path.basename (sys.argv[0]),)
 
     ## parsing getopt options
     opts_short  = 'hdo:rns'

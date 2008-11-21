@@ -153,9 +153,9 @@ class PwdActions (object):
         md5_after = self.md5 (params['path'])
 
         if md5_before == md5_after:
-        	print 'Entry "%s" does not change.' % params['path']
+            print 'Entry "%s" does not change.' % params['path']
         else:
-        	print 'Entry "%s" saved.' % params['path']
+            print 'Entry "%s" saved.' % params['path']
 
 
 def main ():
@@ -176,7 +176,7 @@ def main ():
         -h|--help               - this help
     data:
         For action 'read' or 'search' it can be name/pattern for some entry (instead of -n option).
-        For action 'update' it must be name of entry to update (value for -n option means _new name_ of entry)""" % (sys.argv[0], )
+        For action 'update' it must be name of entry to update (value for -n option means _new name_ of entry)""" % (os.path.basename (sys.argv[0]), )
 
     # calling getopt
     opts_short  = 'hvn:d:l:p:r:w'
@@ -266,7 +266,7 @@ def main ():
 
 
 if __name__ == '__main__':
-	main ()
+    main ()
 
 # $Id$
 # vim: ft=python
