@@ -22,7 +22,6 @@ version %(version)s (%(date)s)''' % {
   'date': __date__
 }
 
-import getopt
 import hashlib
 import os, os.path
 import re
@@ -136,15 +135,19 @@ def find_films (path, recursive=False):
 
 
 def main ():
-    usage = '''%s [-h|--help] [-v|--version] [-d|--directory] [-r|--recursive] [-o|--output output_dir] input1 input2 .. inputN
+    import getopt
+
+    usage = __desc__ + "\n\n" + '''%s [-h|--help] [-v|--version] [-d|--directory] [-r|--recursive] [-o|--output output_dir] [-n|--no-validate] input1 input2 .. inputN
 -h|--help           - this help message
 -d|--directory      - if specified, scan every passed argument (input1 .. inputN) for files with extensions: avi, mpeg, mpg, mp4, mkv, rmvb
 -r|--recursive      - if specified, every directory passed as input will be scanned recursively. Skipped when -d is not specified
 -o|--output_dir     - specify directory when you want to save downloaded files. If not specified, try to save every subtitle in films directory
+-n|--no-validate    - if given, specified list of films will not be validated for being movie files (work only without -d parameter)
 input1 .. inputN    - if -d is not specified, this is treaten like films files, to which you want to download subtitles. In other case, this is list of directories whis are scanned for files'''
 
-    opts_short  = 'hdo:r'
-    opts_long   = ['help', 'directory', 'output=', 'recursive']
+    ## parsing getopt options
+    opts_short  = 'hdo:rn'
+    opts_long   = ['help', 'directory', 'output=', 'recursive', 'no-validate']
     try:
         opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
     except getopt.GetoptError, e:
@@ -154,9 +157,10 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     recursive   = False
     directory   = False
     output      = None
+    validate    = True
     for o, a in opts:
         if o in ('-h', '--help'):
-            print __desc__ + "\n\n" + usage
+            print usage
             raise SystemExit (0)
         elif o in ('-v', '--version'):
             print __version__
@@ -167,29 +171,42 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
             recursive = True
         elif o in ('-o', '--output'):
             output = a
+        elif o in ('-n', '--no-validate'):
+            validate = False
 
-
+    ## find all films
     fnames = []
-    if not directory:
-        if not args:
-            print usage
-            raise SystemExit (1)
-        fnames = filter (lambda a: is_film (a), args)
-    else:
+    if directory:
         dirs = []
         if not args:
-            dirs = (os.getcwd (), )
+            dirs.append (os.getcwd ())
         else:
-            dirs = args
-
+            dirs.extend (args)
         for d in dirs:
             f = find_films (d, recursive)
             if f:
-                fnames += f
+                fnames.extend (f)
+
+    ## all files from current dir
+    elif not args:
+        fnames.extend (find_films (os.getcwd ()))
+
+    ## check files given by user
+    elif validate:
+        fnames.extend (f for f in args if is_film (f))
+
+    ## don't check, every given file is a file (skip only nonfile)
+    else:
+        fnames.extend (f for f in args if os.path.isfile (f))
+
+    if not fnames:
+        print usage
+        raise SystemExit (2)
 
     # find longest filename
     length = max (map (len, fnames)) + 1
 
+    ## download all subtitles
     for fname in fnames:
         r = get_subtitles (fname, output)
         if r:
@@ -197,7 +214,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
         else:
             status = u'not found'
         fname += ' '
-        print '%s: %s' % (fname.ljust (length, '-'), status)
+        print u'%s: %s' % (fname.ljust (length, '-'), status)
 
 
 if __name__ == '__main__':
