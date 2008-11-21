@@ -21,10 +21,11 @@ version %(version)s (%(date)s)''' % {
   'date': __date__
 }
 
-import os, os.path
-import sys
-import re
+import fnmatch
 import getopt
+import os, os.path
+import re
+import sys
 
 output          = sys.stdout
 threshold       = '1M'
@@ -69,7 +70,7 @@ def round (size, multi=4096):
 
 def excluded (path, exclude):
     for exc in exclude:
-        if (isinstance (exc, str) and (path == exc or path.startswith (exc.rstrip ('/') + '/')))\
+        if (isinstance (exc, str) and (path == exc or path.startswith (exc.rstrip ('/') + '/') or fnmatch.fnmatch (path, exc)))\
                     or\
                 (isinstance (exc, re_type) and exc.search (path)):
             return True
@@ -130,6 +131,7 @@ def scan_dir (path, to_skip=[]):
     return data
 
 if __name__ == '__main__':
+    usage = '''%s [-n|--no-human] [-o|--output -] [-t|--threshold 1M] [-s|--show-omitted] [-x|--exclude *str*] [-d|--debug] [-l|--follow-links] [-r|--exclude-regexp ^regexp$]'''
     # parsowanie argumntow
     try:
         opts_short = 'hvno:t:sx:dlr:'
@@ -140,7 +142,7 @@ if __name__ == '__main__':
                 print usage
                 raise SystemExit (0)
             elif o in ('-v', '--version'):
-                print version
+                print '%s (%s)' % (__version__, __date__)
                 raise SystemExit (0)
             elif o in ('-n', '--no-human'):
                 human_size = lambda q: q
