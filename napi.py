@@ -22,10 +22,10 @@ version %(version)s (%(date)s)''' % {
   'date': __date__
 }
 
+import commands
 import hashlib
 import os, os.path
 import re
-import subprocess
 import sys
 import urllib
 
@@ -53,10 +53,8 @@ def extract_subtitles (data):
         fh.write (data)
 
     # extract archive and write it to second temporary file
-    fh_sub = os.tmpfile ()
-    cmd = ['7z', 'x', '-y', '-so', '-bd', '-piBlm8NTigvru0Jr0', fh_arch_path]
-    p = subprocess.Popen (cmd, stdout=fh_sub, stderr=subprocess.PIPE)
-    r = p.communicate ()
+    cmd = ['7za', 'x', '-y', '-so', '-bd', '-piBlm8NTigvru0Jr0', fh_arch_path]
+    p = commands.getstatusoutput (' '.join (cmd))
 
     # remove temporary archive
     try:
@@ -64,13 +62,11 @@ def extract_subtitles (data):
     except:
         pass
 
-    if p.returncode != 0:
-#         print >>sys.stderr, "\n".join (r[1].strip().split ("\n")[5:])
+    if p[0] != 0:
         return False
 
     # return content of subtitles
-    fh_sub.seek (0)
-    return fh_sub.read ()
+    return p[1]
 
 def get_subtitles (film, output=None):
     if not os.path.isfile (film):
@@ -100,6 +96,10 @@ def get_subtitles (film, output=None):
         fh.write (data)
 
     return True
+
+def has_subtitle (film):
+    p = os.path.splitext (film)
+    return os.path.isfile (p[0] + '.txt')
 
 
 def is_film (path):
@@ -137,27 +137,29 @@ def find_films (path, recursive=False):
 def main ():
     import getopt
 
-    usage = __desc__ + "\n\n" + '''%s [-h|--help] [-v|--version] [-d|--directory] [-r|--recursive] [-o|--output output_dir] [-n|--no-validate] input1 input2 .. inputN
+    usage = __desc__ + "\n\n" + '''%s [-h|--help] [-v|--version] [-d|--directory] [-r|--recursive] [-o|--output output_dir] [-n|--no-validate] [-s|--skip] input1 input2 .. inputN
 -h|--help           - this help message
 -d|--directory      - if specified, scan every passed argument (input1 .. inputN) for files with extensions: avi, mpeg, mpg, mp4, mkv, rmvb
 -r|--recursive      - if specified, every directory passed as input will be scanned recursively. Skipped when -d is not specified
 -o|--output_dir     - specify directory when you want to save downloaded files. If not specified, try to save every subtitle in films directory
 -n|--no-validate    - if given, specified list of films will not be validated for being movie files (work only without -d parameter)
+-s|--skip           - if specified, if any film has subtitle for it, new subtitles will not be searched
 input1 .. inputN    - if -d is not specified, this is treaten like films files, to which you want to download subtitles. In other case, this is list of directories whis are scanned for files'''
 
     ## parsing getopt options
-    opts_short  = 'hdo:rn'
-    opts_long   = ['help', 'directory', 'output=', 'recursive', 'no-validate']
+    opts_short  = 'hdo:rns'
+    opts_long   = ['help', 'directory', 'output=', 'recursive', 'no-validate', 'skip']
     try:
         opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
     except getopt.GetoptError, e:
         print e
         raise SystemExit (1)
 
-    recursive   = False
-    directory   = False
-    output      = None
-    validate    = True
+    recursive       = False
+    directory       = False
+    output          = None
+    validate        = True
+    skip_existent   = False
     for o, a in opts:
         if o in ('-h', '--help'):
             print usage
@@ -173,6 +175,8 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
             output = a
         elif o in ('-n', '--no-validate'):
             validate = False
+        elif o in ('-s', '--skip'):
+            skip_existent = True
 
     ## find all films
     fnames = []
@@ -199,8 +203,12 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     else:
         fnames.extend (f for f in args if os.path.isfile (f))
 
+    ## skip searching for existent subtitles
+    if skip_existent:
+        fnames = [ f for f in fnames if not has_subtitle (f) ]
+
     if not fnames:
-        print usage
+        print 'Cannot find any film.'
         raise SystemExit (2)
 
     # find longest filename
@@ -218,7 +226,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
 
 
 if __name__ == '__main__':
-	main ()
+    main ()
 
 # $Id$
 # vim: ft=python
