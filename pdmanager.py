@@ -240,32 +240,32 @@ def main ():
         result = getattr (PwdActions (), 'action__' + params['action']) (params)
     except Exception, e:
         print 'Some error ocured:', e
-    else:
-        if params['action'] in ('read', 'search'):
-            if result:
-                for name, data in result.items ():
-                    print os.path.join (params['root'], os.path.dirname (name)), '::', os.path.basename (name)
-                    print 'Login:', data['login']
-                    print 'Password:', data['passwd'] if params['show_passwd'] else '***'
+
+    if params['action'] in ('read', 'search'):
+        if result:
+            for name, data in result.items ():
+                print os.path.join (params['root'], os.path.dirname (name)), '::', os.path.basename (name)
+                print 'Login:', data['login']
+                print 'Password:', data['passwd'] if params['show_passwd'] else '***'
+                print
+                if data['desc']:
+                    print data['desc']
                     print
-                    if data['desc']:
-                        print data['desc']
-                        print
-                    print
-            else:
-                print 'Nothing found'
+                print
+        else:
+            print 'Nothing found'
 
-        elif params['action'] == 'add':
-            print 'Entry created "%s".' % result
+    elif params['action'] == 'add':
+        print 'Entry created "%s".' % result
 
-        elif params['action'] == 'update':
-            print 'Entry "%s" updated.' % os.path.basename (params['path'])
-            if params['path'] != result:
-                print 'Entry renamed to: "%s".' % result
+    elif params['action'] == 'update':
+        print 'Entry "%s" updated.' % os.path.basename (params['path'])
+        if params['path'] != result:
+            print 'Entry renamed to: "%s".' % result
 
-        elif params['action'] == 'delete':
-            if result:
-                print 'Entry "%s" deleted.' % os.path.basename (params['name'])
+    elif params['action'] == 'delete':
+        if result:
+            print 'Entry "%s" deleted.' % os.path.basename (params['name'])
 
 
 if __name__ == '__main__':
