@@ -3,7 +3,7 @@
 
 from __future__ import with_statement
 
-__version__   = 'version 0.3'
+__version__   = 'version 0.4'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
 __copyright__ = '(r) 2007-2008'
 __program__   = 'pdmanager.py - tool for managing password database stored in plain text files'
@@ -22,6 +22,8 @@ version %(version)s (%(date)s)''' % {
   'date': __date__
 }
 
+import commands
+import getpass
 import glob
 import hashlib
 import os, os.path
@@ -53,14 +55,22 @@ class PwdActions (object):
         if os.path.exists (path) or os.path.isfile (path):
             raise Exception ('Entry already exists!')
 
+        ret = [path, None]
+        if params.get ('genpass', False):
+            cmd = 'genpass.py ' + params['genpass_opt']
+            params['passwd'] = commands.getoutput (cmd)
+            ret[1] = params['passwd']
+        elif params.get ('passwd', '') == 'ASK':
+            params['passwd'] = getpass.getpass ('Enter password: ')
+
         with open (path, 'w') as fh:
-            fh.write ("user: %s\n" % params['login'])
-            fh.write ("pass: %s\n" % params['passwd'])
+            fh.write ("user: %s\n" % params.get ('login', ''))
+            fh.write ("pass: %s\n" % params.get ('passwd', ''))
             if 'desc' in params:
                 fh.write (params['desc'].replace (r'\n', "\n"))
             fh.write ("\n")
             fh.write (self.VIMLINE)
-        return path
+        return ret
 
     def action__read (self, params):
         """Read entry"""
@@ -93,6 +103,15 @@ class PwdActions (object):
         desc    = params.get ('desc', None)
         name    = params.get ('name', None)
         path    = params['path']
+        ret     = [path, None]
+
+        if params.get ('genpass', False):
+            cmd    = 'genpass.py ' + params['genpass_opt']
+            passwd = commands.getoutput (cmd)
+            ret[1] = passwd
+        elif params.get ('passwd', '') == 'ASK':
+            passwd = getpass.getpass ('Enter password: ')
+
         if login is not None or passwd is not None or desc is not None:
             with open (path, 'r+') as fh:
                 fh.seek (0)
@@ -116,9 +135,9 @@ class PwdActions (object):
         if name is not None:
             new_path = os.path.join (os.path.dirname (path), name)
             shutil.move (path, new_path)
-            path = new_path
+            ret[0] = new_path
 
-        return path
+        return ret
 
     def action__delete (self, params):
         """Delete entry"""
@@ -161,27 +180,30 @@ class PwdActions (object):
 def main ():
     import getopt
 
-    # TODO
     usage = __desc__ + """\n\n%s [action] [data] [options]
     action:
         add|read|update|delete|search|edit - defaults to read
     options:
-        -n|--name name          - entry name    (required)
-        -l|--login login        - login         (required)
-        -p|--password password  - password      (required)
-        -d|--desc some desc     - some additional info (WARNING: \\n string is replaced with new line character!)
-        -r|--root path          - directory where store entries files (defaults to ~/.passwd)
-        -w|--show-password      - display plain text password (without this password is starred)
-        -v|--version            - version info
-        -h|--help               - this help
+        -n|--name name                  - entry name    (required)
+        -l|--login login                - login         (required)
+        -g|--genpass                    - use random password and display it. Be sure genpass.py is in your $PATH
+        -q|--genpass-options options    - pass this options to genpass.py (default to: -l -b -d -g 16)
+        -p|--password password|ASK      - password or ASK - then you will be prompted to enter Your password safely
+        -d|--desc some desc             - some additional info (WARNING: \\n string is replaced with new line character!)
+        -r|--root path                  - directory where store entries files (defaults to ~/.passwd)
+        -w|--show-password              - display plain text password (without this password is starred)
+        -v|--version                    - version info
+        -h|--help                       - this help
     data:
         For action 'read' or 'search' it can be name/pattern for some entry (instead of -n option).
         For action 'update' it must be name of entry to update (value for -n option means _new name_ of entry)""" % (os.path.basename (sys.argv[0]), )
 
     # calling getopt
-    opts_short  = 'hvn:d:l:p:r:w'
-    opts_long   = ('help', 'version', 'name=', 'desc=', 'login=', 'password=',
-                    'root=', '--show-password',)
+    opts_short  = 'hvn:d:l:p:r:wgq:'
+    opts_long   = (
+        'help', 'version', 'name=', 'desc=', 'login=', 'password=', 'root=', 'show-password',
+        'genpass', 'genpass-options=',
+    )
     try:
         opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
     except getopt.GetoptError, e:
@@ -192,6 +214,7 @@ def main ():
     params  = dict (
         action      = 'read',
         show_passwd = False,
+        genpass_opt = '-l -b -d -g 16',
     )
     for o, a in opts:
         if o in ('-h', '--help'):
@@ -201,17 +224,21 @@ def main ():
             print '%s (%s)' % (__version__, __date__)
             raise SystemExit (0)
         elif o in ('-n', '--name'):
-            params['name']      = a
+            params['name']        = a
         elif o in ('-d', '--desc'):
-            params['desc']      = a
+            params['desc']        = a
         elif o in ('-l', '--login'):
-            params['login']     = a
+            params['login']       = a
         elif o in ('-p', '--password'):
-            params['passwd']    = a
+            params['passwd']      = a
         elif o in ('-r', '--root'):
-            params['root']   = a
+            params['root']        = a
         elif o in ('-w', '--show-password'):
             params['show_passwd'] = True
+        elif o in ('-g', '--genpass'):
+            params['genpass']     = True
+        elif o in ('-q', '--genpass-options'):
+            params['genpass_opt'] = a
 
     # additional validaton of parameters - getopt can't do it
     # if there is no -r parameter, we try to find root
@@ -233,11 +260,14 @@ def main ():
     if 'name' not in params and args:
         params['name'] = args
 
+    ## executing action
     try:
         result = getattr (PwdActions (), 'action__' + params['action']) (params)
     except Exception, e:
         print 'Some error ocured:', e
+        raise SystemExit (1)
 
+    ## display results
     if params['action'] in ('read', 'search'):
         if result:
             for name, data in result.items ():
@@ -253,12 +283,16 @@ def main ():
             print 'Nothing found'
 
     elif params['action'] == 'add':
-        print 'Entry created "%s".' % result
+        print 'Entry created "%s".' % result[0]
+        if result[1] is not None:
+            print 'Your password: %s' % result[1]
 
     elif params['action'] == 'update':
         print 'Entry "%s" updated.' % os.path.basename (params['path'])
-        if params['path'] != result:
-            print 'Entry renamed to: "%s".' % result
+        if params['path'] != result[0]:
+            print 'Entry renamed to: "%s".' % result[0]
+        if result[1] is not None:
+            print 'Your password: %s' % result[1]
 
     elif params['action'] == 'delete':
         if result:
