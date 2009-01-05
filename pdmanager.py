@@ -7,7 +7,7 @@ __version__   = 'version 0.4'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
 __copyright__ = '(r) 2007-2008'
 __program__   = 'pdmanager.py - tool for managing password database stored in plain text files'
-__date__      = '2008-11-21'
+__date__      = '2008-10-21'
 __license__   = 'GPL v.2'
 
 __desc__      = '''%(desc)s
