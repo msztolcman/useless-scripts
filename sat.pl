@@ -1,12 +1,14 @@
 #!/usr/bin/env perl
-
 # $Id$
-my $__version__   = 'version 0.3';
-my $__author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>';
-my $__copyright__ = '(r) 2008';
-my $__program__   = 'sat.pl - simple static analysis tool';
-my $__date__      = '2008-07-08';
-my $__license__   = 'GPL v.2';
+
+# Version: 0.3
+# Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>
+# Copyright: (r) 2008 - 2009
+# Program: sat.pl - simple static analysis tool
+# Date: 2008-07-08
+# License: GPL v.2
+
+
 
 use strict;
 use warnings;

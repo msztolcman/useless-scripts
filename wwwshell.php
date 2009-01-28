@@ -1,11 +1,15 @@
 <?php
-# Author: Marcin Sztolcman <http://urzenia.net/>
-# Copyright: (c) 2008
-# License: GPL v.2
-# Version: 0.2
-#
 # $Id$
 # vim: ft=php
+#
+# Version: 0.2
+# Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>
+# Copyright: (r) 2008 - 2009
+# Program: wwwshell.php - shell access via browser
+# Date: 2009-01-28
+# License: GPL v.2
+
+
 
 # configuration
 # your home directory

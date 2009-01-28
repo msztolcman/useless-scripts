@@ -1,11 +1,12 @@
 #!/usr/bin/env python2.5
 # -*- coding: utf-8 -*-
+# $Id$
 
 from __future__ import with_statement
 
 __version__   = 'version 0.4'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
-__copyright__ = '(r) 2007-2008'
+__copyright__ = '(r) 2007-2009'
 __program__   = 'pdmanager.py - tool for managing password database stored in plain text files'
 __date__      = '2008-10-21'
 __license__   = 'GPL v.2'
@@ -21,6 +22,8 @@ version %(version)s (%(date)s)''' % {
   'version': __version__,
   'date': __date__
 }
+
+
 
 import commands
 import getpass
@@ -302,5 +305,4 @@ def main ():
 if __name__ == '__main__':
     main ()
 
-# $Id$
 # vim: ft=python

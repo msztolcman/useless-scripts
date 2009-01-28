@@ -1,19 +1,21 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 # $Id$
+
 __version__   = 'version 0.3'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
-__copyright__ = __author__ + '(r) 2006'
+__copyright__ = '(r) 2006 - 2009'
 __program__   = 'filecase - tool for recursive renaming files to lower/upper case version of their names'
 __date__      = '2008-04-11'
 __license__   = 'GPL v.2'
 
 __desc__      = '''%(desc)s
-%(author)s (r) 2006
+%(author)s %(copyright)s
 license: %(license)s
 version %(version)s (%(date)s)''' % {
   'desc': __program__,
   'author': __author__,
+  'copyright': __copyright__,
   'license': __license__,
   'version': __version__,
   'date': __date__
@@ -21,18 +23,17 @@ version %(version)s (%(date)s)''' % {
 
 
 
-import os, os.path
-import sys
+import copy
 import getopt
 import glob
+import hashlib
+import os, os.path
 import re
-import copy
+import sys
 import time
-import md5
-import string
 
-usage = dict(
-  s = u'Usage: %s [--exists=ask|delete|skip] [--recursive] [--mask=*.*] [--regexp=regexp] [--exclude] [--size=size] --lower|upper|swap directory' % os.path.basename(sys.argv[0]),
+usage = dict (
+  s = u'Usage: %s [--exists=ask|delete|skip] [--recursive] [--mask=*.*] [--regexp=regexp] [--exclude] [--size=size] --lower|upper|swap directory' % os.path.basename (sys.argv[0]),
   l = u'''Usage: %s [--options] --[lower|upper|swap] directory
 
 OPTIONS:
@@ -50,7 +51,7 @@ ACTIONS:
   -s|--swap  - swap case of filenames
 
 DIRECTORY - if not specified, will be used your current directory
-''' % os.path.basename(sys.argv[0])
+''' % os.path.basename (sys.argv[0])
 )
 
 question_tpl = u"""File already exists.
@@ -69,37 +70,37 @@ Replace it? (y/N)"""
 
 
 
-def caseToLower(s):
-  return s.lower()
-def caseToUpper(s):
-  return s.upper()
-def caseSwap(s):
-  return s.swapcase()
+def caseToLower (s):
+  return s.lower ()
+def caseToUpper (s):
+  return s.upper ()
+def caseSwap (s):
+  return s.swapcase ()
 
 
 
-def getMd5(fname, size=4096):
-  return md5.new(open(fname).read(size)).hexdigest()
-def getTime(t):
-  return time.strftime('%Y-%m-%d %H-%M-%S', time.localtime(t))
-def calculateSize(size):
+def getMd5 (fname, size=4096):
+  return hashlib.md5 (open (fname).read (size)).hexdigest ()
+def getTime (t):
+  return time.strftime ('%Y-%m-%d %H-%M-%S', time.localtime (t))
+def calculateSize (size):
   m = 1
   if size[-1] in ('0','1','2','3','4','5','6','7','8','9'):
     pass
-  elif size[-1].lower() == 'b':
+  elif size[-1].lower () == 'b':
     size = size[:-1]
-  elif size[-1].lower() == 'k':
+  elif size[-1].lower () == 'k':
     m, size = 1024, size[:-1]
-  elif size[-1].lower() == 'm':
+  elif size[-1].lower () == 'm':
     m, size = 1024*1024, size[:-1]
   else:
     raise ValueError, 'Incorrect size.'
 
   try:
-    return int(size) * m
+    return int (size) * m
   except ValueError:
     raise ValueError, 'Incorrect size.'
-def exit(msg, code):
+def exit (msg, code):
   print usage['s']
   if msg:
     print
@@ -108,120 +109,120 @@ def exit(msg, code):
 
 
 
-def getFilesListRaw(path):
-  return [ os.path.join(path, obj)\
-      for obj in os.listdir(path)\
-      if os.path.isfile(os.path.join(path, obj)) ]
+def getFilesListRaw (path):
+  return [ os.path.join (path, obj)\
+      for obj in os.listdir (path)\
+      if os.path.isfile (os.path.join (path, obj)) ]
 
-def getFilesListNotExclude(path, mask=None, regexp=None):
+def getFilesListNotExclude (path, mask=None, regexp=None):
   if mask is None:
-    flist = getFilesListRaw(path)
+    flist = getFilesListRaw (path)
 
     if regexp is not None:
-      flist = [ obj for obj in flist if regexp.match(os.path.basename(obj)) ]
+      flist = [ obj for obj in flist if regexp.match (os.path.basename (obj)) ]
   else:
     flist = [ obj\
-        for obj in glob.glob(os.path.join(path, mask))\
-        if os.path.isfile(obj) ]
+        for obj in glob.glob (os.path.join (path, mask))\
+        if os.path.isfile (obj) ]
 
   return flist
 
-def getFilesListExclude(path, mask=None, regexp=None):
-  flist = getFilesListRaw(path)
+def getFilesListExclude (path, mask=None, regexp=None):
+  flist = getFilesListRaw (path)
   if mask is not None:
-    gl = glob.glob(os.path.join(path, mask))
+    gl = glob.glob (os.path.join (path, mask))
     flist = [ obj for obj in flist if obj not in gl ]
   elif regexp is not None:
-    flist = [ obj for obj in flist if not regexp.match(os.path.basename(obj)) ]
+    flist = [ obj for obj in flist if not regexp.match (os.path.basename (obj)) ]
   return flist
 
-def getDirsList(path):
-  return [ os.path.join(path, o)\
-      for o in os.listdir(path)\
-      if os.path.isdir(os.path.join(path, o)) ]
+def getDirsList (path):
+  return [ os.path.join (path, o)\
+      for o in os.listdir (path)\
+      if os.path.isdir (os.path.join (path, o)) ]
 
 
 
-def renameFiles(path, v):
+def renameFiles (path, v):
   if v.exclude:
-    flist = getFilesListExclude(path, v.mask, v.regexp)
+    flist = getFilesListExclude (path, v.mask, v.regexp)
   else:
-    flist = getFilesListNotExclude(path, v.mask, v.regexp)
+    flist = getFilesListNotExclude (path, v.mask, v.regexp)
 
   for obj in flist:
-    _d, _f = os.path.split(obj)
+    _d, _f = os.path.split (obj)
 
-    new = os.path.join(_d, v.mode(_f))
-    if os.path.exists(new):
+    new = os.path.join (_d, v.mode (_f))
+    if os.path.exists (new):
       if v.exists == 'skip':
         continue
       elif v.exists == 'ask':
-        d_obj, d_new = os.stat(obj), os.stat(new)
+        d_obj, d_new = os.stat (obj), os.stat (new)
 
-        if getMd5(obj, v.size) == getMd5(new, v.size):
+        if getMd5 (obj, v.size) == getMd5 (new, v.size):
           md5Match = 'match'
         else:
           md5Match = 'mismatch'
 
-        question = question_tpl % dict(
+        question = question_tpl % dict (
           o_name  = obj,
           o_size  = d_obj.st_size,
-          o_cdate  = getTime(d_obj.st_ctime),
-          o_mdate  = getTime(d_obj.st_mtime),
+          o_cdate  = getTime (d_obj.st_ctime),
+          o_mdate  = getTime (d_obj.st_mtime),
           n_name  = new,
           n_size  = d_new.st_size,
-          n_cdate  = getTime(d_new.st_ctime),
-          n_mdate  = getTime(d_new.st_mtime),
+          n_cdate  = getTime (d_new.st_ctime),
+          n_mdate  = getTime (d_new.st_mtime),
           md5     = md5Match,
           md5size = v.size
         )
-        if raw_input(question).lower() in ('y', 'yes'):
-          os.remove(new)
-          os.rename(obj, new)
+        if raw_input (question).lower () in ('y', 'yes'):
+          os.remove (new)
+          os.rename (obj, new)
       elif v.exists == 'delete':
-        os.remove(new)
-        os.rename(obj, new)
+        os.remove (new)
+        os.rename (obj, new)
     else:
-      os.rename(obj, new)
+      os.rename (obj, new)
 
   if v.recursive:
-    for _d in getDirsList(path):
-      renameFiles(_d, v)
+    for _d in getDirsList (path):
+      renameFiles (_d, v)
 
 
 
-class Settings(object):
+class Settings (object):
   __s = {}
-  def __setattr__(self, k, v):
-    if self.__s.has_key(k):
+  def __setattr__ (self, k, v):
+    if self.__s.has_key (k):
       self.__s[k] = v
-  def __getattr__(self, k):
+  def __getattr__ (self, k):
     return self.__s[k]
-  def __delattr__(self, k):
+  def __delattr__ (self, k):
     pass
-  def __init__(self, **v):
+  def __init__ (self, **v):
     if v is not None:
-      self.__s.update(v)
-  def __str__(self):
-    return "\n".join( ["%s: %s" % i for i in self.__s.items()] )
+      self.__s.update (v)
+  def __str__ (self):
+    return "\n".join ( ["%s: %s" % i for i in self.__s.items ()] )
 
 
 
-def init():
+def init ():
   # getting script argument
   s_args = 'he:rm:g:lusxi:v'
   l_args = ('help', 'exists=', 'recursive', 'mask=', 'regexp=', 'lower', 'upper', 'swap', 'exclude', 'size=', 'version')
   try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], s_args, l_args)
+    opts, args = getopt.gnu_getopt (sys.argv[1:], s_args, l_args)
   except getopt.GetoptError, msg:
-    exit(msg, 1)
+    exit (msg, 1)
 
   # default settings
-  v = Settings(
+  v = Settings (
     mode      = None,
     exists    = 'skip',
     exclude   = False,
-    path      = os.getcwdu(),
+    path      = os.getcwdu (),
     recursive = False,
     mask      = None,
     regexp    = None,
@@ -236,16 +237,16 @@ def init():
       print __desc__
       raise SystemExit
     elif o in ('-e', '--exists'):
-      a = a.lower()
+      a = a.lower ()
       if a not in ('ask', 'skip', 'delete'):
-        exit('', 2)
+        exit ('', 2)
       v.exists = a
     elif o in ('-r', '--recursive'):
       v.recursive = True
     elif o in ('-m', '--mask'):
       v.mask = a
     elif o in ('-g', '--regexp'):
-      v.regexp = re.compile(a)
+      v.regexp = re.compile (a)
     elif o in ('-l', '--lower'):
       v.mode = caseToLower
     elif o in ('-u', '--upper'):
@@ -257,40 +258,32 @@ def init():
     elif o in ('-i', '--size'):
       v.size = a
 
-  if len(args) >= 1:
-    v.path = os.path.expanduser(args[0])
-    v.path = os.path.abspath(v.path)
+  if len (args) >= 1:
+    v.path = os.path.expanduser (args[0])
+    v.path = os.path.abspath (v.path)
 
   # checking for correct parameters
   if v.mode is None:
-    exit(u'You must select mode of renaming: --lower|upper|swap.', 3)
+    exit (u'You must select mode of renaming: --lower|upper|swap.', 3)
   if v.mask is not None and v.regexp is not None:
-    exit(u'Mask and regexp cannot be given in one time.', 4)
-  if not os.path.isdir(v.path):
-    exit(u'"%s" is not a directory name' % v.path, 5)
-  if not os.access(v.path, os.R_OK)\
-      or not os.access(v.path, os.W_OK)\
-      or not os.access(v.path, os.X_OK):
-    exit(u'You havn\'t enough privileges to do it.', 6)
+    exit (u'Mask and regexp cannot be given in one time.', 4)
+  if not os.path.isdir (v.path):
+    exit (u'"%s" is not a directory name' % v.path, 5)
+  if not os.access (v.path, os.R_OK)\
+      or not os.access (v.path, os.W_OK)\
+      or not os.access (v.path, os.X_OK):
+    exit (u'You havn\'t enough privileges to do it.', 6)
 
   try:
-    v.size = calculateSize(v.size)
+    v.size = calculateSize (v.size)
   except ValueError:
-    exit(u'Incorrect size.', 7)
+    exit (u'Incorrect size.', 7)
 
   # let's go!
-  renameFiles(v.path, v)
+  renameFiles (v.path, v)
 
 
 if __name__ == '__main__':
-  init()
+  init ()
 
-'''
-ChangeLog:
-
-2006-09-15  - v.0.2 - refactorized
-                    - added support for option: -i
-2006-09-14  - v.0.1 - initial version
-'''
-
-# vim: ft=python fdm=manual foldlevel=10000
+# vim: ft=python

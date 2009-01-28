@@ -1,8 +1,10 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# $Id$
 
 __version__   = 'version 0.5'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
-__copyright__ = '(r) 2005-2006'
+__copyright__ = '(r) 2005-2009'
 __program__   = 'perms - tool for recursive change permissions or owner files and/or directories'
 __date__      = '2006-12-11'
 __license__   = 'GPL v.2'
@@ -24,10 +26,15 @@ STANDARD_D='755'
 
 
 
-import os, os.path, sys, getopt, pwd, grp
+import getopt
+import grp
+import os
+import os.path
+import pwd
+import sys
 
-usage = dict(
-  s = u'Usage: %(name)s [--dir-perm=perm] [--file-perm=perm] [--standard] [--both-perm=perm] [--owner=name] [--owner-affect=all|file|dir] [--group=group] [--group-affect=all|file|dir] [--omit-rootdir] [--version] [--help] directory' % dict(name=os.path.basename(sys.argv[0])),
+usage = dict (
+  s = u'Usage: %(name)s [--dir-perm=perm] [--file-perm=perm] [--standard] [--both-perm=perm] [--owner=name] [--owner-affect=all|file|dir] [--group=group] [--group-affect=all|file|dir] [--omit-rootdir] [--version] [--help] directory' % dict (name=os.path.basename (sys.argv[0])),
   l = '''Usage: %(name)s [--options] directory
 
 OPTIONS:
@@ -46,62 +53,62 @@ OPTIONS:
   -v|--version
       prints program name and exits
   -h|--help
-''' % dict(name=os.path.basename(sys.argv[0]))
+''' % dict (name=os.path.basename (sys.argv[0]))
 )
 
-class Settings(object):
+class Settings (object):
   __s = {}
-  def __setattr__(self, k, v):
-    if self.__s.has_key(k):
+  def __setattr__ (self, k, v):
+    if self.__s.has_key (k):
       self.__s[k] = v
-  def __getattr__(self, k):
+  def __getattr__ (self, k):
     return self.__s[k]
-  def __delattr__(self, k):
+  def __delattr__ (self, k):
     pass
-  def __init__(self, **v):
+  def __init__ (self, **v):
     if v is not None:
-      self.__s.update(v)
-  def __str__(self):
-    return "\n".join( ["%s: %s" % i for i in self.__s.items()] )
+      self.__s.update (v)
+  def __str__ (self):
+    return "\n".join ( ["%s: %s" % i for i in self.__s.items ()] )
 
-def exit(msg, code = 0):
+def exit (msg, code = 0):
   print usage['s']
   if msg:
     print
     print >>sys.stderr, msg
   raise SystemExit, code
 
-def chmod(path, v, mode):
+def chmod (path, v, mode):
   try:
-    os.chmod(path, getattr(v, mode))
+    os.chmod (path, getattr (v, mode))
     return True
   except OSError:
     return False
 
-def chown(path, v, mode):
+def chown (path, v, mode):
   try:
-    os.chown(path, v.uid, -1)
+    os.chown (path, v.uid, -1)
     return True
   except OSError:
     return False
 
-def chgrp(path, v, mode):
+def chgrp (path, v, mode):
   try:
-    os.chown(path, -1, v.gid)
+    os.chown (path, -1, v.gid)
     return True
   except OSError:
     return False
 
-def main():
+def main ():
   s_opt = 'd:f:o:g:a:b:vhx:rs'
   l_opt = ('dir-perm=', 'file-perm=', 'owner=', 'group=', 'owner-affect=', 'group-affect=', 'version', 'help', 'both-perm=', 'omit-rootdir', 'standard')
   try:
-    opts, args = getopt.gnu_getopt(sys.argv[1:], s_opt, l_opt)
+    opts, args = getopt.gnu_getopt (sys.argv[1:], s_opt, l_opt)
   except getopt.GetoptError, msg:
-    exit(msg, 1)
+    exit (msg, 1)
 
-  v = Settings(
-    path = os.getcwdu(),
+  v = Settings (
+    path = os.getcwdu (),
     dir = None,
     file = None,
     uid = None,
@@ -113,25 +120,25 @@ def main():
   )
   for o, a in opts:
     if o in ('-d', '--dir-perm'):
-      v.dir = int(a, 8)
+      v.dir = int (a, 8)
     elif o in ('-f', '--file-perm'):
-      v.file = int(a, 8)
+      v.file = int (a, 8)
     elif o in ('-s', '--standard'):
       v.standard = True
     elif o in ('-x', '--both-perm'):
-      v.file = int(a, 8)
-      v.dir  = int(a, 8)
+      v.file = int (a, 8)
+      v.dir  = int (a, 8)
     elif o in ('-o', '--owner'):
-      v.uid = a.strip()
+      v.uid = a.strip ()
     elif o in ('-g', '--group'):
-      v.gid = a.strip()
+      v.gid = a.strip ()
     elif o in ('-a', '--owner-affect'):
       if a not in ('all', 'file', 'dir'):
-        exit('Option -a must be one of: all, file, dir.', 2)
+        exit ('Option -a must be one of: all, file, dir.', 2)
       v.oaffect = a
     elif o in ('-b', '--group-affect'):
       if a not in ('all', 'file', 'dir'):
-        exit('Option -b must be one of: all, file, dir.', 3)
+        exit ('Option -b must be one of: all, file, dir.', 3)
       v.gaffect = a
     elif o in ('-r', '--omit-rootdir'):
       v.omitroot = True
@@ -142,48 +149,48 @@ def main():
       print usage['l']
       raise SystemExit, 0
 
-  if len(args) >= 1:
-    v.path = os.path.expanduser(args[0])
-    v.path = os.path.abspath(v.path)
+  if len (args) >= 1:
+    v.path = os.path.expanduser (args[0])
+    v.path = os.path.abspath (v.path)
 
   if v.uid is not None:
     try:
-      v.uid = pwd.getpwnam(v.uid)[2]
+      v.uid = pwd.getpwnam (v.uid)[2]
     except KeyError:
-      exit('Cannot find user \'%s\'.' % v.uid, 3)
+      exit ('Cannot find user \'%s\'.' % v.uid, 3)
 
   if v.gid is not None:
     try:
-      v.gid = grp.getgrnam(v.gid)[2]
+      v.gid = grp.getgrnam (v.gid)[2]
     except KeyError:
-      exit('Cannot find group \'%s\'.' % v.gid, 4)
+      exit ('Cannot find group \'%s\'.' % v.gid, 4)
 
   #czy ktorykolwiek tryb jest wybrany ?
   if v.gid is None and v.uid is None and\
       v.dir is None and v.file is None and v.standard == False:
-    exit('Work mode must be at least one of: \'-u\', \'-g\', \'-d\', \'-f\', \'-s\' or \'-x\'.', 5)
+    exit ('Work mode must be at least one of: \'-u\', \'-g\', \'-d\', \'-f\', \'-s\' or \'-x\'.', 5)
 
-  actions = dict(
+  actions = dict (
     d = [],
     f = []
   )
   if v.standard:
-    v.dir  = int(STANDARD_D, 8)
-    v.file = int(STANDARD_F, 8)
+    v.dir  = int (STANDARD_D, 8)
+    v.file = int (STANDARD_F, 8)
   if v.gid is not None:
     if v.gaffect in ('dir', 'all'):
-      actions['d'].append(chgrp)
+      actions['d'].append (chgrp)
     if v.gaffect in ('file', 'all'):
-      actions['f'].append(chgrp)
+      actions['f'].append (chgrp)
   if v.uid is not None:
     if v.oaffect in ('dir', 'all'):
-      actions['d'].append(chown)
+      actions['d'].append (chown)
     if v.oaffect in ('file', 'all'):
-      actions['f'].append(chown)
+      actions['f'].append (chown)
   if v.dir is not None:
-    actions['d'].append(chmod)
+    actions['d'].append (chmod)
   if v.file is not None:
-    actions['f'].append(chmod)
+    actions['f'].append (chmod)
 
 
   #jedziemy z koksem...
@@ -192,30 +199,30 @@ def main():
   #najpierw dla katalogu nadrzednego
   if not v.omitroot:
     for action in actions['d']:
-      if not action(v.path, v, 'dir'):
-        omitted.append(v.path)
+      if not action (v.path, v, 'dir'):
+        omitted.append (v.path)
 
-  for root, dirs, files in os.walk(v.path):
+  for root, dirs, files in os.walk (v.path):
     #katalogi
     for _d in dirs:
       for action in actions['d']:
-        path = os.path.join(root, _d)
-        if not action(path, v, 'dir'):
-          omitted.append(path)
+        path = os.path.join (root, _d)
+        if not action (path, v, 'dir'):
+          omitted.append (path)
 
     for _f in files:
       for action in actions['f']:
-        path = os.path.join(root, _f)
-        if not action(path, v, 'file'):
-          omitted.append(path)
+        path = os.path.join (root, _f)
+        if not action (path, v, 'file'):
+          omitted.append (path)
 
   if omitted:
     print 'Failed:'
-    print "\n".join(omitted)
+    print "\n".join (omitted)
 
 
 if __name__ == '__main__':
-  main()
+  main ()
 
 '''
 ChangeLog:
@@ -229,5 +236,4 @@ ChangeLog:
                     - cosmetics
 '''
 
-# $Id$
-# vim: ft=python fdm=manual foldlevel=10000
+# vim: ft=python

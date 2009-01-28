@@ -1,9 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# $Id$
 
-# Author: Marcin Sztolcman <http://urzenia.net>
-# License: GPL v.2
-# Copyright: (r) 2008
+__version__   = 'version 0.1'
+__author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
+__copyright__ = '(r) 2008 - 2009'
+__program__   = 'mke.py - Metacity Keybinding Editor'
+__date__      = '2009-01-28'
+__license__   = 'GPL v.2'
+
+__desc__      = '''%(desc)s
+%(author)s %(copyright)s
+license: %(license)s
+version %(version)s (%(date)s)''' % {
+  'desc': __program__,
+  'author': __author__,
+  'copyright': __copyright__,
+  'license': __license__,
+  'version': __version__,
+  'date': __date__
+}
+
+
 
 import os.path
 import re
@@ -66,8 +84,8 @@ class MetacityKeybindingsEditor (object):
 		if not keybinding:
 			keybinding = 'disabled'
 
-		self.client.set_string ('/apps/metacity/keybinding_commands/command_'+str(cmdno), action)
-		self.client.set_string ('/apps/metacity/global_keybindings/run_command_'+str(cmdno), keybinding)
+		self.client.set_string ('/apps/metacity/keybinding_commands/command_'+str (cmdno), action)
+		self.client.set_string ('/apps/metacity/global_keybindings/run_command_'+str (cmdno), keybinding)
 
 		self.current_keybindings[int (cmdno)] = {'action':action, 'keybinding':keybinding}
 #        self.get_current_keybindings ()

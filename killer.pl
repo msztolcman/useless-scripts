@@ -1,10 +1,14 @@
 #!/usr/bin/env perl
+# $Id$
 
-# Author: Marcin Sztolcman <http://urzenia.net/email>
 # Version: 1.0.1
+# Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>
+# Copyright: (r) 2007 - 2009
+# Program: killer.pl - ps command line tool via webbrowser
+# Date: 2009-01-28
 # License: GPL v.2
-# Copyright: @2007 Marcin Sztolcman
-# SVN: $Id: killer.pl 3 2008-01-14 09:25:22Z mysz $
+
+
 
 package Killer;
 #use strict;
@@ -270,8 +274,8 @@ package Killer;
 		read (STDIN, $tmp, $ENV{CONTENT_LENGTH});
 
 		# dwie pętle, ponieważ zakładam ze dana wartość może pojawić się wielokrotnie w querystringu
-		foreach $part (split( /\&/, $tmp )) {
-			($k, $v) = split( /\=/, $part, 2);
+		foreach $part (split ( /\&/, $tmp )) {
+			($k, $v) = split ( /\=/, $part, 2);
 			$v =~ s/%23/\#/g;
 			$v =~ s/%2F/\//g;
 			push (@{$ret{$k}}, $v);
@@ -479,10 +483,12 @@ package Killer;
 package main;
 sub main {
 	print 'Content-type: text/html;charset=UTF-8', "\n\n";
-	my $K = new Killer;
+
+	my $K = Killer->new ();
 	$K->kill_execute ();
 	$K->display ();
 }
+
 main ();
 
 # vim: ft=perl

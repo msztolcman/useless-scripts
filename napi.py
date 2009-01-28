@@ -1,11 +1,12 @@
 #!/usr/bin/python -W ignore
 # -*- coding: utf-8 -*-
+# $Id$
 
 from __future__ import with_statement
 
 __version__   = 'version 0.5'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net> (based od napi.py from http://hacking.apcoh.com/2008/01/napi_06.html - 0.15b)'
-__copyright__ = '(r) 2008'
+__copyright__ = '(r) 2008 - 2009'
 __program__   = 'napi.py - find and download polish subtitles for films (from http://www.napiprojekt.pl/)'
 __date__      = '2008-11-21'
 __license__   = 'GPL v.2'
@@ -21,6 +22,8 @@ version %(version)s (%(date)s)''' % {
   'version': __version__,
   'date': __date__
 }
+
+
 
 import commands
 import hashlib
@@ -228,5 +231,4 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
 if __name__ == '__main__':
     main ()
 
-# $Id$
 # vim: ft=python

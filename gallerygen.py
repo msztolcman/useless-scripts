@@ -1,7 +1,29 @@
 #!/usr/bin/env python2.6
 # -*- coding: utf-8 -*-
+# $Id$
 
 from __future__ import print_function
+
+__version__   = 'version 0.1'
+__author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
+__copyright__ = '(r) 2008 - 2009'
+__program__   = 'gallerygen.py - simple tool for fast creating static image gallery'
+__date__      = '2009-01-28'
+__license__   = 'GPL v.2'
+
+__desc__      = '''%(desc)s
+%(author)s %(copyright)s
+license: %(license)s
+version %(version)s (%(date)s)''' % {
+  'desc': __program__,
+  'author': __author__,
+  'copyright': __copyright__,
+  'license': __license__,
+  'version': __version__,
+  'date': __date__
+}
+
+
 
 import commands
 import math
@@ -234,7 +256,10 @@ def main ():
         raise SystemExit (2)
 
     ## validating
-    if not os.path.isdir (cfg.directory):
+    if not cfg.directory:
+        print ("Give me some directory!", file=sys.stderr)
+        raise SystemExit (7)
+    elif not os.path.isdir (cfg.directory):
         print ('"%s" is not a directory.' % cfg.directory, file=sys.stderr)
         raise SystemExit (3)
     try:
@@ -384,3 +409,5 @@ def main ():
 
 if __name__ == '__main__':
     main ()
+
+# vim: ft=python
