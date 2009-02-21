@@ -14,7 +14,7 @@ __license__   = 'GPL v.2'
 __desc__      = '''%(desc)s
 %(author)s %(copyright)s
 license: %(license)s
-version %(version)s (%(date)s)''' % {
+%(version)s (%(date)s)''' % {
   'desc': __program__,
   'author': __author__,
   'copyright': __copyright__,
