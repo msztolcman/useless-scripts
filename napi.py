@@ -14,7 +14,7 @@ __license__   = 'GPL v.2'
 __desc__      = '''%(desc)s
 %(author)s %(copyright)s
 license: %(license)s
-version %(version)s (%(date)s)''' % {
+%(version)s (%(date)s)''' % {
   'desc': __program__,
   'author': __author__,
   'copyright': __copyright__,
@@ -25,10 +25,10 @@ version %(version)s (%(date)s)''' % {
 
 
 
-import commands
 import hashlib
 import os, os.path
 import re
+import subprocess
 import sys
 import urllib
 
@@ -56,8 +56,10 @@ def extract_subtitles (data):
         fh.write (data)
 
     # extract archive and write it to second temporary file
-    cmd = ['7za', 'x', '-y', '-so', '-bd', '-piBlm8NTigvru0Jr0', fh_arch_path]
-    p = commands.getstatusoutput (' '.join (cmd))
+    cmd = ('7za', 'x', '-y', '-so', '-bd', '-piBlm8NTigvru0Jr0', fh_arch_path, )
+
+    p = subprocess.Popen (cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = p.communicate ()
 
     # remove temporary archive
     try:
@@ -65,11 +67,11 @@ def extract_subtitles (data):
     except:
         pass
 
-    if p[0] != 0:
+    if p.returncode != 0:
         return False
 
     # return content of subtitles
-    return p[1]
+    return stdout
 
 def get_subtitles (film, output=None):
     if not os.path.isfile (film):
@@ -103,7 +105,6 @@ def get_subtitles (film, output=None):
 def has_subtitle (film):
     p = os.path.splitext (film)
     return os.path.isfile (p[0] + '.txt')
-
 
 def is_film (path):
     if os.path.isfile (path) and re.search ('\.(?:avi|mpe?g|mp4|mkv|rmvb)$', path, re.I):
@@ -140,18 +141,18 @@ def find_films (path, recursive=False):
 def main ():
     import getopt
 
-    usage = __desc__ + "\n\n" + '''%s [-h|--help] [-v|--version] [-d|--directory] [-r|--recursive] [-o|--output output_dir] [-n|--no-validate] [-s|--skip] input1 input2 .. inputN
+    usage = __desc__ + "\n\n" + '''%s [-h|--help] [-v|--version] [-d|--directory] [-r|--recursive] [-o|--output output_dir] [-n|--no-validate] [-w|--overwrite] input1 input2 .. inputN
 -h|--help           - this help message
 -d|--directory      - if specified, scan every passed argument (input1 .. inputN) for files with extensions: avi, mpeg, mpg, mp4, mkv, rmvb
 -r|--recursive      - if specified, every directory passed as input will be scanned recursively. Skipped when -d is not specified
 -o|--output_dir     - specify directory when you want to save downloaded files. If not specified, try to save every subtitle in films directory
 -n|--no-validate    - if given, specified list of films will not be validated for being movie files (work only without -d parameter)
--s|--skip           - if specified, if any film has subtitle for it, new subtitles will not be searched
+-w|--overwrite      - if specified, existent subtitles will not be overwritten
 input1 .. inputN    - if -d is not specified, this is treaten like films files, to which you want to download subtitles. In other case, this is list of directories whis are scanned for files''' % (os.path.basename (sys.argv[0]),)
 
     ## parsing getopt options
-    opts_short  = 'hdo:rns'
-    opts_long   = ['help', 'directory', 'output=', 'recursive', 'no-validate', 'skip']
+    opts_short  = 'hdo:rnw'
+    opts_long   = ['help', 'directory', 'output=', 'recursive', 'no-validate', 'overwrite']
     try:
         opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
     except getopt.GetoptError, e:
@@ -162,7 +163,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     directory       = False
     output          = None
     validate        = True
-    skip_existent   = False
+    overwrite       = False
     for o, a in opts:
         if o in ('-h', '--help'):
             print usage
@@ -178,8 +179,8 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
             output = a
         elif o in ('-n', '--no-validate'):
             validate = False
-        elif o in ('-s', '--skip'):
-            skip_existent = True
+        elif o in ('-w', '--overwrite'):
+            overwrite = True
 
     ## find all films
     fnames = []
@@ -207,7 +208,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
         fnames.extend (f for f in args if os.path.isfile (f))
 
     ## skip searching for existent subtitles
-    if skip_existent:
+    if not overwrite:
         fnames = [ f for f in fnames if not has_subtitle (f) ]
 
     if not fnames:
