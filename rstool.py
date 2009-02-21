@@ -29,6 +29,7 @@ import os, os.path
 import re
 import subprocess
 import sys
+import time
 import types
 import urllib, urllib2
 
@@ -129,6 +130,7 @@ class RS_Actions (object):
                     urls = all_urls[:end]
                     all_urls = all_urls[end:]
 
+                    print (time.strftime ('%Y-%m-%d %H:%M:%S', time.localtime (time.time ())))
                     self.__download (urls, Config.root)
 
     def action__stat (self, args, ):
