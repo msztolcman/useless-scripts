@@ -1,0 +1,158 @@
+#!/usr/bin/env python2.6 -tt
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+
+__version__   = 'version 0.3'
+__author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
+__copyright__ = '(r) 2009-2009'
+__program__   = 'rdiff - show differences in local or remote files'
+__date__      = '2009-02-21'
+__license__   = 'GPL v.2'
+
+__desc__      = '''%(desc)s
+%(author)s %(copyright)s
+license: %(license)s
+%(version)s (%(date)s)''' % {
+  'desc': __program__,
+  'author': __author__,
+  'copyright': __copyright__,
+  'license': __license__,
+  'version': __version__,
+  'date': __date__
+}
+
+import contextlib
+import netrc
+import os, os.path
+import sys
+import urlparse
+import urllib2
+import warnings
+
+usage = '''{0} [-i|--interactive] [-n|--normal] [-c|--context] [-h|--help] [-v|--version]
+-i|--interactive    - use interactive mode if username or password is needed
+-n|--normal         - normal diff instead of unified
+-c|--context        - number of context lines
+-v|--version        - show version info
+-h|--help           - this help
+'''.format (os.path.basename (sys.argv[0]))
+
+def download_file (url):
+    ## we just need some tmpname, and assume that it's used in secure environment (desktop or sth like this)
+    with warnings.catch_warnings ():
+        warnings.simplefilter ('ignore', Warning)
+        tmpfile = os.tmpnam ()
+
+    opener = urllib2.build_opener () #urllib2.OpenerDirector ()
+    opener.addheaders = [
+        ('User-Agent', 'rdiff/' + __version__.split (None, 1)[1] + ' http://useless-scripts.googlecode.com'),
+    ]
+
+    with contextlib.closing (opener.open (url)) as uh:
+        with open (tmpfile, 'w') as fh:
+            for line in uh:
+                fh.write (line)
+
+    return tmpfile
+
+def url_auth_data (netloc, interactive):
+    user = password = None
+    if '@' in netloc:
+        user, netloc = netloc.split ('@', 1)
+        if ':' in user:
+            user, password = user.split (':', 1)
+
+    if not user or not password:
+        try:
+            _netrc = netrc.netrc (os.path.expanduser ('~/.netrc')).authenticators (netloc)
+            if _netrc:
+                if not user:
+                    user = _netrc[0].strip ('"')
+                if not password:
+                    password = _netrc[2].strip ('"')
+        except netrc.NetrcParseError as e:
+            pass
+
+    if (not user or not password) and interactive:
+        import getpass
+        if not user:
+            user = raw_input ('Username for {0}: '.format (netloc))
+        if not password:
+            password = getpass.getpass ('Password for {0}: '.format (netloc))
+
+    if user and password:
+        netloc = '{0}:{1}@{2}'.format (user, password, netloc)
+
+    return netloc
+
+def normalize_url (url, interactive):
+    anonymous = False
+    url_data = list (urlparse.urlparse (url))
+    if (url_data[0] == 'ftp' or url_data[0] == 'ftps') and not anonymous:
+        url_data[1] = url_auth_data (url_data[1], interactive)
+
+    elif url_data[0] == 'file' or not url_data[0]:
+        if not url_data[0]:
+            url_data[0] = 'file'
+        url_data[2] = os.path.expanduser (url_data[2])
+        if not os.path.isabs (url_data[2]):
+            url_data[2] = os.path.join (os.getcwd (), url_data[2])
+
+    return urlparse.urlunparse (url_data)
+
+def main ():
+    import getopt
+
+    try:
+        opts, args = getopt.gnu_getopt (sys.argv[1:], 'inc:hv', ('interactive', 'normal', 'context=', 'help', 'version', ))
+    except getopt.GetoptError as e:
+        print (e, file=sys.stderr)
+        raise SystemExit (1)
+
+    interactive     = False
+    context         = 3
+    unified         = True
+    for o, a in opts:
+        if o in ('-i', '--interactive'):
+            interactive = True
+        elif o in ('-n', '--normal'):
+            unified = False
+        elif o in ('-c', '--context'):
+            context = int (a)
+        elif o in ('-h', '--help'):
+            print (usage)
+            raise SystemExit (0)
+        elif o in ('-v', '--version'):
+            print (__version__)
+            raise SystemExit (0)
+
+    cmd = 'diff -s ' + ('-U' if unified else '-C') + str (context)
+    while args:
+        try:
+            url1, url2 = args.pop (0), args.pop (0)
+        except IndexError:
+            if url1:
+                print ('Need even number of arguments.', file=sys.stderr)
+            break
+
+        url1 = normalize_url (url1, interactive)
+        url2 = normalize_url (url2, interactive)
+
+        try:
+            f1 = download_file (url1)
+            f2 = download_file (url2)
+        except Exception as e:
+            print (e, file=sys.stderr)
+            continue
+        else:
+            os.system ('{0} {1} {2}'.format (cmd, f1, f2))
+            try:
+                os.remove (f1)
+                os.remove (f2)
+            except:
+                pass
+            print ()
+
+if __name__ == '__main__':
+    main ()
