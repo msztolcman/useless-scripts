@@ -28,7 +28,7 @@ import re
 import subprocess
 import sys
 
-usage = '''%s [-p|--password password] [-o|--options options] [-t|--type type] [-v|--version] [-h|--help]''' % os.path.basename (sys.argv[0])
+usage = '''%s [-p|--password password] [-o|--options options] [-t|--type type] [-c|--change-root] [-v|--version] [-h|--help]''' % os.path.basename (sys.argv[0])
 
 class Settings (dict):
     pass
@@ -46,8 +46,8 @@ def special_rar (arch_args, path, params):
 
 def main ():
     import getopt
-    opts_sh     = 'vhp:o:t:'
-    opts_long   = ('verion', 'help', 'password=', 'options=', 'type=', )
+    opts_sh     = 'vhp:o:t:c'
+    opts_long   = ('verion', 'help', 'password=', 'options=', 'type=','change-root' )
 
     try:
         opts, args = getopt.getopt (sys.argv[1:], opts_sh, opts_long)
@@ -59,6 +59,7 @@ def main ():
         password    = None,
         options     = None,
         type        = '',
+        change_root = False,
     )
 
     for o, a in opts:
@@ -74,6 +75,8 @@ def main ():
             S['options'] = a
         elif o in ('-t', '--type'):
             S['type'] = a
+        elif o in ('-c', '--change-root'):
+            S['change_root'] = True
 
     if not args:
         print >>sys.stderr, 'Give me some files to extract!'
@@ -92,7 +95,9 @@ def main ():
         sevenz  = ('7za x %(arch_args)s %(fname)s', '-p', None),
     )
 
+    cur = os.getcwd ()
     for obj in args:
+        os.chdir (cur)
         if not os.path.isfile (obj) or os.path.islink (obj):
             print >>sys.stderr, 'Unrecognized file type: %s' % obj
             continue
@@ -111,6 +116,8 @@ def main ():
             else:
                 arch_type = os.path.splitext (obj)[1].lstrip ('.')
 
+        if arch_type:
+            arch_type = arch_type.lower ()
         if arch_type not in archive_types:
             print >>sys.stderr, 'Unrecognized file type: %s' % (arch_type if arch_type else obj)
             continue
@@ -123,8 +130,14 @@ def main ():
             arch_args = archive_types[arch_type][2] (arch_args, obj, S, )
 
         cmd = archive_types[arch_type][0]
+        if S['change_root']:
+            root, fname = os.path.split (obj)
+            os.chdir (root)
+        else:
+            fname = obj
+
         cmd %= {
-            'fname':        obj,
+            'fname':        fname,
             'arch_args':    arch_args,
         }
 #         print arch_args

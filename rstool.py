@@ -105,15 +105,26 @@ class RS_Actions (object):
         return os.system (cmd)
 
     def action__download (self, files, ):
+        root = Config.root
         for fname in files:
             ## url, nie plik
             if not os.path.isfile (fname):
-                self.__download (fname, Config.root)
+                self.__download (fname, root)
 
             else:
                 ## obsluga downloadu do katalogow w ktorych sa pliki z lista urli
                 if Config.root_change:
-                    Config.root = os.path.dirname (fname)
+                    root = os.path.dirname (fname)
+                elif Config.mkdir:
+                    dpath = os.path.basename (fname)
+                    if dpath.endswith ('.rs'):
+                        dpath = dpath[:-3]
+                    root = os.path.join (Config.root, ''.join (dpath.replace ('_', ' ').title ().split ()))
+                    try:
+                        os.makedirs (root)
+                    except Exception, e:
+                        print ('Error:', e, file=sys.stderr)
+                        continue
 
                 all_urls = []
                 ## lecimy po pliku i zbieramy wszystkie urle
@@ -131,7 +142,7 @@ class RS_Actions (object):
                     all_urls = all_urls[end:]
 
                     print (time.strftime ('%Y-%m-%d %H:%M:%S', time.localtime (time.time ())))
-                    self.__download (urls, Config.root)
+                    self.__download (urls, root)
 
     def action__stat (self, args, ):
         ## pola jakich oczekuje formularz logowania
@@ -222,13 +233,14 @@ class Config (object):
     root            = '.'
     action          = rs_actions.action__download
     stat_options    = ('x', 't', )
+    mkdir           = False
 
 
 
 def main ():
     import getopt
 
-    usage = '''%s [-a|--action download|stat|check] [-l|--login login] [-p|--password password] [-s|--stat_options options] [-c|--root-change] [-r|--root] [-h|--help] [-v|--version]
+    usage = '''%s [-a|--action download|stat|check] [-l|--login login] [-p|--password password] [-s|--stat_options options] [-c|--root-change] [-r|--root] [-m|--mkdir] [-h|--help] [-v|--version]
 Actions:
     download - download given files (default)
     stat - read some statistics
@@ -247,12 +259,13 @@ Options:
         f - files
     -c|--root-change - if given, destination directory will be parent directory for input file
     -r|--root ROOT - if given, all files will be saved in ROOT directory
+    -m|--mkdir - create subdirectory for downloaded files
     -v|--version - version info
     -h|--help - this help ''' % os.path.basename (sys.argv[0])
 
     ## parsowanie opcji i ustawien
-    opts_short  = 'a:l:p:cr:hvs:'
-    opts_long   = ('action=', 'login=', 'password=', 'root_change', 'root=', 'help', 'version', 'stat-options=', )
+    opts_short  = 'a:l:p:cr:hvs:m'
+    opts_long   = ('action=', 'login=', 'password=', 'root_change', 'root=', 'help', 'version', 'stat-options=', 'mkdir')
     try:
         opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
 
@@ -280,6 +293,9 @@ Options:
 
             elif o in ('-s', '--stat-options'):
                 Config.stat_options = list (a)
+
+            elif o in ('-m', '--mkdir'):
+                Config.mkdir = True
 
             elif o in ('-h', '--help'):
                 print (usage)

@@ -10,7 +10,6 @@
 # License: GPL v.2
 
 
-
 # configuration
 # your home directory - if set to null, or this directory does not exists, we use value of getcwd() as home directory
 define ('HOME', null);
