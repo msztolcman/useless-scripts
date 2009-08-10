@@ -86,7 +86,10 @@ def debug (*msgs, **opts):
     if opts.get ('exit', None) is not None:
         raise SystemExit (opts['exit'])
 
-def scan_dir (path, to_skip=[]):
+def scan_dir (path, to_skip=None):
+    if to_skip is None:
+        to_skip = []
+
     data = {}
     # iterowanie po katalogu
     for root, dirs, files in os.walk (os.path.realpath (path)):
@@ -132,7 +135,7 @@ def scan_dir (path, to_skip=[]):
 
     return data
 
-if __name__ == '__main__':
+def main ():
     usage = '''%s [-n|--no-human] [-o|--output -] [-t|--threshold 1M] [-s|--show-omitted] [-x|--exclude *str*] [-d|--debug] [-l|--follow-links] [-r|--exclude-regexp ^regexp$]''' % (os.path.basename (sys.argv[0]), )
     # parsowanie argumntow
     try:
@@ -215,5 +218,13 @@ if __name__ == '__main__':
     if all_omitted:
         print >>output, 'Pominiete (rozmiar poniżej %s):' % human_size (threshold)
         print >>output, "\n".join (sorted (all_omitted))
+
+
+if __name__ == '__main__':
+    try:
+        main ()
+    except KeyboardInterrupt:
+        print >>sys.stderr, 'Interrupted by user.'
+
 
 # vim: ft=python
