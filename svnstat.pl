@@ -20,11 +20,13 @@ use Getopt::Std qw/getopts/;
 sub date2ts ($) {
     my ($date, ) = @_;
 
+    state $rxp_date = qr/(\d{4})-(\d\d)-(\d\d) (\d\d?):(\d\d?):(\d\d?)(?: ([-+])(\d{4}))?/;
+
     my (@date, $ret, );
-    @date = $date =~ /(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d) ([-+])(\d{4})/;
+    @date = $date =~ $rxp_date;
     return $date if (!scalar (@date));
 
-    return mktime ($6, $5, $4, $3, $2-1, $1-1900);
+    return mktime (int ($6 || 0), int ($5 || 0), int ($4 || 0), $3, $2-1, $1-1900);
 }
 
 sub my_cmp ($$) {
@@ -36,7 +38,7 @@ sub my_cmp ($$) {
 }
 
 my (%opts, %aliases, $line, $fh, %sort_columns, $sort_reverse, );
-if (!getopts ('a:s:', \%opts, )) {
+if (!getopts ('a:s:f:l:', \%opts, )) {
     exit (1);
 }
 
@@ -68,6 +70,22 @@ elsif (
     exit (3);
 }
 
+if ($opts{f} && $opts{f} =~ /^\d{4}-\d\d-\d\d$/) {
+    $opts{f} = date2ts ($opts{f} . ' 00:00:00');
+    delete ($opts{f}) if (!$opts{f} || $opts{f} <= 0);
+}
+else {
+    delete ($opts{f});
+}
+
+if ($opts{l} && $opts{l} =~ /^\d{4}-\d\d-\d\d$/) {
+    $opts{l} = date2ts ($opts{l} . ' 23:59:59');
+    delete ($opts{f}) if (!$opts{l} || $opts{l} <= 0);
+}
+else {
+    delete ($opts{l});
+}
+
 if ($opts{a} && -f $opts{a}) {
     if (!open ($fh, '<', $opts{a})) {
         print STDERR 'Canot open aliases file: ' . $!;
@@ -89,7 +107,7 @@ if (!open ($fh, '<', $ARGV[0])) {
 }
 
 
-my ($rxp_statline, %log_data, $rev, $user, $date, $lines, );
+my ($rxp_statline, %log_data, $rev, $user, $date, $date_ts, $lines, );
 $rxp_statline = qr/
     ^
     \s*r
@@ -107,6 +125,13 @@ while (defined ($line = <$fh>)) {
     next if ($line !~ $rxp_statline);
     ($rev, $user, $date, $lines, ) = ($1, $2, $3, $4, );
 
+    $date_ts = date2ts ($date);
+    next if (
+        ($opts{f} && $opts{f} >= $date_ts)
+        ||
+        ($opts{l} && $opts{l} <= $date_ts)
+    );
+
     $user = $aliases{$user}
         if (exists ($aliases{$user}));
 
@@ -120,7 +145,7 @@ while (defined ($line = <$fh>)) {
 
     push (@{$log_data{$user}{rev}}, $rev);
     push (@{$log_data{$user}{date}}, $date);
-    push (@{$log_data{$user}{date_ts}}, date2ts ($date));
+    push (@{$log_data{$user}{date_ts}}, $date_ts);
     push (@{$log_data{$user}{lines}}, $lines);
 }
 
@@ -144,8 +169,8 @@ foreach $data (values (%log_data)) {
     ];
 }
 
-print " User       Quant Date start - Date end   Fst rev - Lst rev Descr lines   \n";
-print "--------------------------------------------------------------------------\n";
+print " User       Quant Date start - Date end   Fst rev - Lst rev Descr lines    \n";
+print "---------------------------------------------------------------------------\n";
 my @log_data = sort {
     my_cmp ($$a[$sort_columns{$opts{s}}], $$b[$sort_columns{$opts{s}}]) ||
     $$a[0] cmp $$b[0]
