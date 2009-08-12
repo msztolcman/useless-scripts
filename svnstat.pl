@@ -149,7 +149,7 @@ while (defined ($line = <$fh>)) {
     push (@{$log_data{$user}{lines}}, $lines);
 }
 
-my ($fmt_date, $date_min, $date_max, $revs, $data, );
+my ($fmt_date, $date_min, $date_max, $revs, $data, %summary, );
 $fmt_date = '%Y-%m-%d';
 foreach $data (values (%log_data)) {
     $date_min   = min (@{$$data{date_ts}});
@@ -167,6 +167,9 @@ foreach $data (values (%log_data)) {
         $lines,
         ($lines / $revs),
     ];
+
+    $summary{quant} += $revs;
+    $summary{lines} += $lines;
 }
 
 print " User       Quant Date start - Date end   Fst rev - Lst rev Descr lines    \n";
@@ -175,9 +178,14 @@ my @log_data = sort {
     my_cmp ($$a[$sort_columns{$opts{s}}], $$b[$sort_columns{$opts{s}}]) ||
     $$a[0] cmp $$b[0]
 } values (%log_data);
+
 @log_data = reverse (@log_data)
     if ($sort_reverse);
+
 foreach $data (@log_data) {
     printf " %-10s % 5d %s - %s (% 6d - % 6d) % 6d (%.3f)\n", @$data;
 }
+
+print "---------------------------------------------------------------------------\n";
+printf "Summary: %d revs, %d lines of comments (%.5f lines per commit)\n", $summary{quant}, $summary{lines}, $summary{lines} / $summary{quant};
 
