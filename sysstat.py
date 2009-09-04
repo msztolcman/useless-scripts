@@ -37,12 +37,12 @@ class Stat (object):
         self.read_processes ()
 
     def read_processes (self):
-        pax = commands.getoutput ('ps awuxvvv').split ("\n")[1:]
+        pax = commands.getoutput ('ps awux').split ("\n")[1:]
 
         if len (pax) < self._quant:
             self._quant = len (pax)
 
-        pax = [ line.split (None, 15) for line in pax ]
+        pax = [ line.split (None, 10) for line in pax ]
         pax.sort (key = self._sort_key, reverse = self._sort_reverse)
         self._pax = pax
 
@@ -67,11 +67,11 @@ class StatMem (Stat):
 class StatCpu (Stat):
     col_name = 'CPU'
     def _sort_key (self, line):
-        return float (line[2])
+        return float (line[2].replace (',', '.'))
 
     def __call__ (self):
         for line in self._pax[:self._quant]:
-            yield Stat.line ('%0.2f %%' % float (line[2]), int (line[1]), line[-1])
+            yield Stat.line ('%0.2f %%' % float (line[2].replace (',', '.')), int (line[1]), line[-1])
 
 def main ():
     try:
