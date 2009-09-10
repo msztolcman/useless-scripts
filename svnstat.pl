@@ -1,21 +1,23 @@
-#!/usr/bin/env perl5.10
+#!/usr/bin/env perl
 # $Id: killer.pl 51 2009-01-28 08:40:40Z urzenia $
 
-# Version: 1.0.0
+# Version: 1.1.0
 # Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>
 # Copyright: (r) 2009
 # Program: svnstat.pl - subversion repo statistics
-# Date: 2009-08-10
+# Date: 2009-09-10
 # License: GPL v.2
 
 use feature ':5.10';
 
 use strict;
 use warnings;
+
 use Data::Dumper;
 use POSIX;
 use List::Util qw/min max first sum/;
 use Getopt::Std qw/getopts/;
+use Time::Local qw/timelocal/;
 
 sub date2ts ($) {
     my ($date, ) = @_;
@@ -38,7 +40,7 @@ sub my_cmp ($$) {
 }
 
 my (%opts, %aliases, $line, $fh, %sort_columns, $sort_reverse, );
-if (!getopts ('a:s:f:l:', \%opts, )) {
+if (!getopts ('a:s:f:l:m:', \%opts, )) {
     exit (1);
 }
 
@@ -70,21 +72,42 @@ elsif (
     exit (3);
 }
 
-if ($opts{f} && $opts{f} =~ /^\d{4}-\d\d-\d\d$/) {
-    $opts{f} = date2ts ($opts{f} . ' 00:00:00');
-    delete ($opts{f}) if (!$opts{f} || $opts{f} <= 0);
-}
-else {
-    delete ($opts{f});
+if ($opts{m} && $opts{m} =~ /^\d{4}-\d\d$/) {
+    $opts{f} = $opts{l} = $opts{m};
 }
 
-if ($opts{l} && $opts{l} =~ /^\d{4}-\d\d-\d\d$/) {
+if ($opts{f} && $opts{f} =~ /^\d{4}-\d\d(-\d\d)?$/) {
+    $opts{f} .= '-01'
+        if (!$1);
+    $opts{f} = date2ts ($opts{f} . ' 00:00:00');
+}
+
+delete ($opts{f})
+    if (!$opts{f} || $opts{f} <= 0);
+
+if ($opts{l} && $opts{l} =~ /^(\d{4})-(\d\d)(-\d\d)?$/) {
+    if (!$3) {
+        my $day = 31;
+        while (1) {
+            eval {
+                timelocal (0, 0, 0, $day, $2-1, $1-1900);
+            };
+            last if (!$@);
+            if ($day < 28) {
+                print STDERR 'Error: cannot find last day of given date.';
+                exit (2);
+            }
+
+            --$day;
+        }
+        $opts{l} .= "-$day";
+    }
+
     $opts{l} = date2ts ($opts{l} . ' 23:59:59');
-    delete ($opts{f}) if (!$opts{l} || $opts{l} <= 0);
 }
-else {
-    delete ($opts{l});
-}
+
+delete ($opts{l})
+    if (!$opts{l} || $opts{l} <= 0);
 
 if ($opts{a} && -f $opts{a}) {
     if (!open ($fh, '<', $opts{a})) {
