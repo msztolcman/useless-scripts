@@ -1,10 +1,9 @@
 #!/usr/bin/env perl
 # $Id: killer.pl 51 2009-01-28 08:40:40Z urzenia $
-
-# Version: 1.1.0
+# Program: svnstat.pl - subversion repo statistics
+# Version: 1.1.1
 # Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>
 # Copyright: (r) 2009
-# Program: svnstat.pl - subversion repo statistics
 # Date: 2009-09-10
 # License: GPL v.2
 
@@ -18,6 +17,39 @@ use POSIX;
 use List::Util qw/min max first sum/;
 use Getopt::Std qw/getopts/;
 use Time::Local qw/timelocal/;
+
+our $VERSION = '1.1.1';
+$Getopt::Std::STANDARD_HELP_VERSION = 1;
+
+sub HELP_MESSAGE {
+    $0 =~ /([^\/\\]+)$/;
+    print {$_[0]}
+        $1 .
+        " [-a path/to/nick_aliases] [-s sort_column] [-f YYYY-MM[-DD]] [-l YYYY-MM[-DD]] [-m YYYY-MM] file\n" .
+        "-a - nicknames aliases file. Format: nick = map_to_nick\n" .
+        "-s - sort_column: user rev_quant date_start date_end rev_start rev_end lines lines_avg\n" .
+        "-f - start date. If day is ommited, get first day of month (01)\n" .
+        "-l - end date. If day is ommited, get last day of month (28, 29, 30 or 31)\n" .
+        "-m - set -f and -l to given date\n" .
+        "file - file with svn logs history\n"
+    ;
+
+    exit;
+}
+
+sub VERSION_MESSAGE {
+    my ($fh, $line, );
+    if (open ($fh, '<', $0)) {
+        while (defined ($line = <$fh>)) {
+            last if (!$line);
+            next if ($line && $line !~ /^#\s*(\w.*)$/);
+
+            print {$_[0]} $1, "\n";
+        }
+        print {$_[0]} "\n";
+        close ($fh);
+    }
+}
 
 sub date2ts ($) {
     my ($date, ) = @_;
@@ -45,7 +77,7 @@ if (!getopts ('a:s:f:l:m:', \%opts, )) {
 }
 
 if (scalar (@ARGV) < 1 || !-f $ARGV[0]) {
-    print STDERR 'Give me some file!';
+    print STDERR "Give me some file!\n";
     exit (2);
 }
 
@@ -111,7 +143,7 @@ delete ($opts{l})
 
 if ($opts{a} && -f $opts{a}) {
     if (!open ($fh, '<', $opts{a})) {
-        print STDERR 'Canot open aliases file: ' . $!;
+        print STDERR 'Can\'t open aliases file: ' . $!;
         exit (4);
     }
 
