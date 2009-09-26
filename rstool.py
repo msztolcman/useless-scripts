@@ -96,7 +96,7 @@ class RS_Actions (object):
         if destdir == '.':
             destdir = os.getcwd ()
 
-        ## wywołanie curla: curl [...] -o output1 -o output2 file1 file2
+        ## wywolanie curla: curl [...] -o output1 -o output2 file1 file2
         cmd = self.download_cmd % (Config.login, Config.password, )
         for url in urls:
             url = url.strip ()
@@ -320,7 +320,7 @@ Options:
             raise SystemExit (2)
 
 
-    ## wykonujemy wybraną akcję
+    ## wykonujemy wybrana akcje
     Config.action (args)
 
 if __name__ == '__main__':
