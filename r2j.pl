@@ -57,7 +57,7 @@ sub path_join {
 
 sub main {
     my (%opts, %types, );
-    if (!getopts ('t:d:e:p:s:fn', \%opts, )) {
+    if (!getopts ('t:d:e:p:s:fnc:', \%opts, )) {
         exit (1);
     }
 
@@ -80,7 +80,7 @@ sub main {
         exit (2);
     }
 
-    ## czy mozamy tam zapisac
+    ## czy mozemy tam zapisac
     if ($opts{d} && !-x _) {
         print STDERR "Cannot write in destination directory: $opts{d}.\n";
         exit (3);
@@ -106,6 +106,10 @@ sub main {
         exit (4);
     }
 
+    if (!defined ($opts{c}) || $opts{c} !~ /^\d+$/) {
+        $opts{c} = 30;
+    }
+
     ## OK, do dziela
     my ($et, $info, $fh, $path, $counter, $counter_max, );
     $et = Image::ExifTool->new ();
@@ -128,14 +132,14 @@ sub main {
         }
 
         printf "  Processing: %d, left: %d\n", $counter, $counter_max - $counter
-            if (!($counter % 30));
+            if ($opts{c} > 0 && !($counter % $opts{c}));
 
         ## pobieramy nazwe pliku
         $item =~ /(.*?)([^\/\\]+)$/;
         ## sciezka docelowa: katalog docelowy lub zrodlowy, prefix, nazwa pliku
         $path = path_join (($opts{d} // $1 || '.'), ($opts{p} // '') . $2);
         ## wycinamy rozszerzenie docelowego pliku (pobrane z pliku zrodlowego)
-        if ($path !~ s/\.tar\.(?:bz2|gz)$//i) {
+        if ($path !~ s/\.tar\.(?:bz2?|gz)$//i) {
             $path =~ s/\.[^.]+$//;
         }
         ## doklejamy suffix
