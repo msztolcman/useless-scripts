@@ -23,13 +23,14 @@ sub HELP_MESSAGE {
     $0 =~ /([^\/\\]+)$/;
     print {$_[0]}
         $1 .
-        " [-t extract|preview] [-d dest/dir] [-e file_ext] [-p file_prefix] [-s file_suffix] [-f] file1 file 2 dir1 file3\n" .
+        " [-t extract|preview] [-d dest/dir] [-e file_ext] [-p file_prefix] [-s file_suffix] [-f] [-n] file1 file 2 dir1 file3\n" .
         "-t - extract embedded image, or get preview (defaults to 'extract')\n" .
         "-d - destination directory (defaults to source file directory)\n" .
         "-e - destination file extension (defaults to jpg)\n" .
         "-p - destination file prefix (for example: -p 'file_' a.nef -> file_a.jpg)\n" .
         "-s - destination file suffix (for example: -s '_new' a.nef -> a_new.jpg)\n" .
-        "-f - force write file, even if already exists\n"
+        "-f - force write file, even if already exists\n" .
+        "-n - don't copy exif from source file\n"
     ;
 
     exit;
@@ -56,7 +57,7 @@ sub path_join {
 
 sub main {
     my (%opts, %types, );
-    if (!getopts ('t:d:e:p:s:f', \%opts, )) {
+    if (!getopts ('t:d:e:p:s:fn', \%opts, )) {
         exit (1);
     }
 
@@ -100,17 +101,22 @@ sub main {
     }
 
     ## czy mamy co zapisywac?
-    if (!scalar (@ARGV)) {
+    if (!scalar (@files)) {
         print STDERR "Give me something to process, please...\n";
         exit (4);
     }
 
     ## OK, do dziela
-    my ($et, $info, $fh, $path, );
+    my ($et, $info, $fh, $path, $counter, $counter_max, );
     $et = Image::ExifTool->new ();
     $et->Options (Binary => 1, Replace => 1, );
 
+    $counter_max = scalar (@files);
+
+    printf "Found: %d files\n", $counter_max;
     foreach $item (@files) {
+        ++$counter;
+
         $info = $et->ImageInfo ($item);
         if (!$info) {
             print STDERR "Cannot read file: $item.\n";
@@ -120,6 +126,9 @@ sub main {
             print STDERR "Cannot find embedded image in $item.\n";
             next;
         }
+
+        printf "  Processing: %d, left: %d\n", $counter, $counter_max - $counter
+            if (!($counter % 30));
 
         ## pobieramy nazwe pliku
         $item =~ /(.*?)([^\/\\]+)$/;
@@ -151,9 +160,11 @@ sub main {
         print {$fh} ${delete ($$info{$types{$opts{t}}})};
         close ($fh);
 
-        $et->ImageInfo ($path);
-        $et->SetNewValuesFromFile ($item);
-        $et->WriteInfo ($path);
+        if (!$opts{n}) {
+            $et->ImageInfo ($path);
+            $et->SetNewValuesFromFile ($item);
+            $et->WriteInfo ($path);
+        }
 
         print "$path writed.\n";
     }
