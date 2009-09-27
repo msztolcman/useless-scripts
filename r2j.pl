@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/env perl5.10.0
 # $Id$
 # Program: r2j.pl - extracting jpegs embedded in raws
 # Version: 0.1
@@ -108,10 +108,10 @@ sub main {
     ## OK, do dziela
     my ($et, $info, $fh, $path, );
     $et = Image::ExifTool->new ();
-    $et->Options (Binary => 1);
+    $et->Options (Binary => 1, Replace => 1, );
 
     foreach $item (@files) {
-        $info = $et->ImageInfo ($item, $types{$opts{t}});
+        $info = $et->ImageInfo ($item);
         if (!$info) {
             print STDERR "Cannot read file: $item.\n";
             next;
@@ -124,7 +124,7 @@ sub main {
         ## pobieramy nazwe pliku
         $item =~ /(.*?)([^\/\\]+)$/;
         ## sciezka docelowa: katalog docelowy lub zrodlowy, prefix, nazwa pliku
-        $path = path_join (($opts{d} // $1), ($opts{p} // '') . $2);
+        $path = path_join (($opts{d} // $1 || '.'), ($opts{p} // '') . $2);
         ## wycinamy rozszerzenie docelowego pliku (pobrane z pliku zrodlowego)
         if ($path !~ s/\.tar\.(?:bz2|gz)$//i) {
             $path =~ s/\.[^.]+$//;
@@ -148,8 +148,12 @@ sub main {
         }
 
         ## zapis
-        print {$fh} ${$$info{$types{$opts{t}}}};
+        print {$fh} ${delete ($$info{$types{$opts{t}}})};
         close ($fh);
+
+        $et->ImageInfo ($path);
+        $et->SetNewValuesFromFile ($item);
+        $et->WriteInfo ($path);
 
         print "$path writed.\n";
     }
