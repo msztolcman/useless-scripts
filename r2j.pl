@@ -1,7 +1,7 @@
 #!/usr/bin/env perl5.10.0
 # $Id$
 # Program: r2j.pl - extracting jpegs embedded in raws
-# Version: 0.1
+# Version: 0.2
 # Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>
 # Copyright: (r) 2009
 # Date: 2009-09-13
@@ -16,7 +16,7 @@ use Getopt::Std qw/getopts/;
 
 use Image::ExifTool;
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
 
 sub HELP_MESSAGE {
