@@ -42,8 +42,12 @@ $aliases = array (
 # ##############################################################################
 
 # putenv ('HOME='.HOME);
-error_reporting (E_ALL | E_STRICT);
-ini_set ('display_errors', 1);
+# error_reporting (E_ALL | E_STRICT);
+# ini_set ('display_errors', 1);
+
+if (!function_exists ('proc_open')) {
+    throw new RuntimeException ('Function proc_open () is disabled - script will never work. Contact with your system administrator to enable proc_open ().');
+}
 
 if (function_exists ('set_time_limit')) {
     set_time_limit (90);
