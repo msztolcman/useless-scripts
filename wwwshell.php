@@ -2,7 +2,7 @@
 # $Id$
 # vim: ft=php
 #
-# Version: 0.3
+# Version: 0.4
 # Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>
 # Copyright: (r) 2008 - 2009
 # Program: wwwshell.php - shell access via browser
@@ -13,8 +13,13 @@
 # configuration
 # your home directory - if set to null, or this directory does not exists, we use value of getcwd() as home directory
 define ('HOME', null);
+
 # how many commands store in history
 define ('HISTORY_MAX', 30);
+
+# character set
+define ('CHARSET', 'UTF-8');
+
 # your aliases
 $aliases = array (
     'll'    => 'ls -l',
@@ -28,15 +33,101 @@ $aliases = array (
     'gr'    => 'grep -ir',
 );
 
+## uncomment and fill only, if script can't find SCRIPT URI itself.
+# define ('SCRIPT_URI', 'https://example.com/f1/f2/wwwshell.php');
 
 
+# ##############################################################################
 # do not touch below this line - except you exactly now what are you doing...
+# ##############################################################################
+
 # putenv ('HOME='.HOME);
-set_time_limit (90);
-# error_reporting (E_ALL | E_STRICT);
+error_reporting (E_ALL | E_STRICT);
+ini_set ('display_errors', 1);
+
+if (function_exists ('set_time_limit')) {
+    set_time_limit (90);
+}
 
 if (!ini_get ('session.auto_start')) {
     session_start ();
+}
+
+header ('Content-type: text/html;charset='.CHARSET);
+
+## build script uri
+$script_uri = '';
+if (defined ('SCRIPT_URI') && SCRIPT_URI && 0) {
+    $script_uri = SCRIPT_URI;
+}
+
+else if (array_key_exists ('SCRIPT_URI', $_SERVER) && 0) {
+    $script_uri = $_SERVER['SCRIPT_URI'];
+}
+
+## not so easy...
+else {
+    ## proto
+    if (
+        (array_key_exists ('HTTP_X_FORWARDED_PROTO', $_SERVER) && strtolower ($_SERVER['HTTP_X_FORWARDED_PROTO']) == 'https') ||
+        (array_key_exists ('HTTPS', $_SERVER) && strtolower ($_SERVER['HTTPS']) == 'on') ||
+        (array_key_exists ('HTTPS', $_ENV) && strtolower ($_ENV['HTTPS']) == 'on')
+    ) {
+        $script_uri = 'https://';
+    }
+    else {
+        $script_uri = 'http://';
+    }
+
+    ## host
+    if (isset ($_SERVER['SERVER_NAME'])) {
+        $script_uri .= $_SERVER['SERVER_NAME'];
+    }
+    else if (isset ($_ENV['SERVER_NAME'])) {
+        $script_uri .= $_ENV['SERVER_NAME'];
+    }
+    else if (isset ($_SERVER['HTTP_HOST'])) {
+        $script_uri .= $_SERVER['HTTP_HOST'];
+    }
+    else if (isset ($_ENV['HTTP_HOST'])) {
+        $script_uri .= $_ENV['HTTP_HOST'];
+    }
+    else {
+        throw new RuntimeException ('Unknown host! Please, set SCRIPT_URI inside script.');
+    }
+
+    $script_uri = rtrim ($script_uri, '/');
+
+    ## uri
+    if (isset ($_SERVER['PHP_SELF'])) {
+        $script_uri .= $_SERVER['PHP_SELF'];
+    }
+    else if (isset ($_ENV['PHP_SELF'])) {
+        $script_uri .= $_ENV['PHP_SELF'];
+    }
+    else if (isset ($_SERVER['REQUEST_URI'])) {
+        $script_uri         .= $_SERVER['REQUEST_URI'];
+        list ($script_uri)  = explode ('?', $script_uri, 2);
+    }
+    else if (isset ($_ENV['REQUEST_URI'])) {
+        $script_uri         .= $_ENV['REQUEST_URI'];
+        list ($script_uri)  = explode ('?', $script_uri, 2);
+    }
+    else if (isset ($_SERVER['SCRIPT_NAME'])) {
+        $script_uri .= $_SERVER['SCRIPT_NAME'];
+    }
+    else if (isset ($_ENV['SCRIPT_NAME'])) {
+        $script_uri .= $_ENV['SCRIPT_NAME'];
+    }
+    else if (isset ($_SERVER['SCRIPT_URL'])) {
+        $script_uri .= $_SERVER['SCRIPT_URL'];
+    }
+    else if (isset ($_ENV['SCRIPT_URL'])) {
+        $script_uri .= $_ENV['SCRIPT_URL'];
+    }
+    else {
+        throw new RuntimeException ('Unknown uri! Please, set SCRIPT_URI inside script.');
+    }
 }
 
 function str_entit ($str) {
@@ -58,9 +149,10 @@ function debug () {
     }
     echo '</pre>';
 }
+
 function expand_alias ($command) {
     $length = strcspn ($command, " \t");
-    $cmd = substr ($command, 0, $length);
+    $cmd    = substr ($command, 0, $length);
 
     if (isset ($GLOBALS['aliases'][$cmd])) {
         return $GLOBALS['aliases'][$cmd] . substr ($command, $length);
@@ -232,6 +324,7 @@ if (isset ($_GET['ajax'])) {
 ?><html>
     <head>
         <title>wwwShell (c)2008-<?php echo date ('y'); ?>, Marcin Sztolcman</title>
+        <meta http-equiv="Content-Type" content="text/html;charset=<?php echo CHARSET; ?>" />
         <script type="text/javascript" src="http://code.jquery.com/jquery-1.2.6.pack.js"></script>
         <script type="text/javascript" src="http://view.jquery.com/tags/plugins/autocomplete/1.0.2/jquery.autocomplete.pack.js"></script>
         <script type="text/javascript">
@@ -272,7 +365,7 @@ if (isset ($_GET['ajax'])) {
                     fs = parseInt (value[2]);
                 }
 
-                $.get ("<?php echo $_SERVER['SCRIPT_URI']; ?>", {ajax: 1, fontsize: fs});
+                $.get ("<?php echo $script_uri; ?>", {ajax: 1, fontsize: fs});
 
                 e.css ('font-size', fs);
             }
@@ -290,13 +383,13 @@ if (isset ($_GET['ajax'])) {
                 ).focus ();
 
                 $('#clear_history').click(function () {
-                    $.get ("<?php echo $_SERVER['SCRIPT_URI']; ?>", {ajax: 1, clear_history: 1});
+                    $.get ("<?php echo $script_uri; ?>", {ajax: 1, clear_history: 1});
                     WWWShell.history.data = new Array ();
                     return false;
                 });
 
                 $('#clear_results').click(function () {
-                    $.get ("<?php echo $_SERVER['SCRIPT_URI']; ?>", {ajax: 1, clear_results: 1});
+                    $.get ("<?php echo $script_uri; ?>", {ajax: 1, clear_results: 1});
                     $('#results').html ('');
                     return false;
                 });
@@ -309,7 +402,7 @@ if (isset ($_GET['ajax'])) {
 
                     $(this).attr ('disabled', 'disabled');
                     $.get (
-                        "<?php echo $_SERVER['SCRIPT_URI']; ?>",
+                        "<?php echo $script_uri; ?>",
                         {
                             ajax:       1,
                             execute:    1,
@@ -333,7 +426,7 @@ if (isset ($_GET['ajax'])) {
 
                     // pobieramy pwd
                     $.get (
-                        "<?php echo $_SERVER['SCRIPT_URI']; ?>",
+                        "<?php echo $script_uri; ?>",
                         {
                             ajax:       1,
                             get_cwd:    1
