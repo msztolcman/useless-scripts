@@ -73,11 +73,11 @@ header ('Content-type: text/html;charset='.CHARSET);
 
 ## build script uri
 $script_uri = '';
-if (defined ('SCRIPT_URI') && SCRIPT_URI && 0) {
+if (defined ('SCRIPT_URI') && SCRIPT_URI) {
     $script_uri = SCRIPT_URI;
 }
 
-else if (array_key_exists ('SCRIPT_URI', $_SERVER) && 0) {
+else if (array_key_exists ('SCRIPT_URI', $_SERVER)) {
     $script_uri = $_SERVER['SCRIPT_URI'];
 }
 
