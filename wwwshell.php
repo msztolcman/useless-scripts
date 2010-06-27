@@ -20,6 +20,9 @@ define ('HISTORY_MAX', 30);
 # character set
 define ('CHARSET', 'UTF-8');
 
+# timezone
+defined ('TIMEZONE', '');
+
 # your aliases
 $aliases = array (
     'll'    => 'ls -l',
@@ -55,6 +58,15 @@ if (function_exists ('set_time_limit')) {
 
 if (!ini_get ('session.auto_start')) {
     session_start ();
+}
+
+if (function_exists ('date_default_timezone_set')) {
+    if (defined ('TIMEZONE') && TIMEZONE) {
+        date_default_timezone_set (TIMEZONE);
+    }
+    else if (!date_default_timezone_get ()) {
+        date_default_timezone_get ('GMT');
+    }
 }
 
 header ('Content-type: text/html;charset='.CHARSET);
@@ -327,7 +339,7 @@ if (isset ($_GET['ajax'])) {
 
 ?><html>
     <head>
-        <title>wwwShell (c)2008-<?php echo date ('y'); ?>, Marcin Sztolcman</title>
+        <title>wwwShell (c)2008-<?php echo date ('Y'); ?>, Marcin Sztolcman</title>
         <meta http-equiv="Content-Type" content="text/html;charset=<?php echo CHARSET; ?>" />
         <script type="text/javascript" src="http://code.jquery.com/jquery-1.2.6.pack.js"></script>
         <script type="text/javascript" src="http://view.jquery.com/tags/plugins/autocomplete/1.0.2/jquery.autocomplete.pack.js"></script>
