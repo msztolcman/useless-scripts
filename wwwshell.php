@@ -21,7 +21,7 @@ define ('HISTORY_MAX', 30);
 define ('CHARSET', 'UTF-8');
 
 # timezone
-defined ('TIMEZONE', '');
+define ('TIMEZONE', '');
 
 # your aliases
 $aliases = array (
