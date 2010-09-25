@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # $Id$
 
-# Version: 1.1.0
+# Version: 1.1.2
 # Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>
 # Copyright: (r) 2007 - 2010
 # Program: killer.pl - ps command line tool via webbrowser
@@ -13,6 +13,7 @@ package Killer;
 #     use strict;
 #     use warnings;
     use Data::Dumper;
+    use Storable qw/dclone/;
 
     # deklaracja sygnałów
     my %signals = qw/
@@ -223,12 +224,6 @@ package Killer;
             %{$$self{post}  || {}},
         };
 
-        $$self{root}            = (
-            exists ($ENV{DOCUMENT_URI}) ? $ENV{DOCUMENT_URI} :
-            exists ($ENV{REQUEST_URI})  ? $ENV{REQUEST_URI}  :
-            '/'
-        );
-
         return bless ($self, $class);
     }
 
@@ -245,13 +240,30 @@ package Killer;
         return ($_[0] =~ /^-?\d+(?:\.\d+)?$/);
     }
 
-    sub cgi_dump {
-        my $ret = Dumper (\@_);
+    sub uriencode {
+        my ($data, ) = @_;
+        $data =~ s/([^\w()'*~!.-])/sprintf ('%%%02x', ord ($1))/eg;
+        return $data;
+    }
+
+    sub uridecode {
+        my ($data, ) = @_;
+        $data =~ s/%([A-Fa-f\d]{2})/chr (hex ($1))/eg;
+        return $data;
+    }
+
+    sub htmlencode {
+        my ($data, ) = @_;
+        my $ret = $data;
         $ret =~ s/&/&amp;/g;
         $ret =~ s/"/&quot;/g;
         $ret =~ s/</&lt;/g;
         $ret =~ s/>/&gt;/g;
-        print '<pre>', $ret, '</pre>';
+        return $ret;
+    }
+
+    sub cgi_dump {
+        print '<pre>', htmlencode (Dumper (\@_)), '</pre>';
     }
 
     sub prepare_get_data {
@@ -264,7 +276,7 @@ package Killer;
         my ($k, $v, $part, %ret, );
         foreach $part (split (/\&amp;|\&/, $qs)) {
             ($k, $v) = split (/\=/, $part);
-            push (@{$ret{$k}}, $v);
+            push (@{$ret{uridecode ($k)}}, uridecode ($v));
         }
 
         # wszystko co się pojawi wielokrotnie składamy łącząc je binarnym zerem
@@ -284,9 +296,7 @@ package Killer;
         # dwie pętle, ponieważ zakładam ze dana wartość może pojawić się wielokrotnie w querystringu
         foreach $part (split ( /\&/, $tmp )) {
             ($k, $v) = split ( /\=/, $part, 2);
-            $v =~ s/%23/\#/g;
-            $v =~ s/%2F/\//g;
-            push (@{$ret{$k}}, $v);
+            push (@{$ret{uridecode ($k)}}, uridecode ($v));
         }
 
         # wszystko co się pojawi wielokrotnie składamy łącząc je binarnym zerem
@@ -350,11 +360,10 @@ package Killer;
 
         my ($v1, $v2, );
         return sort {
-			($v1, $v2) = ($$a[$$q{sort_by}], $$b[$$q{sort_by}]);
-			(is_numeric ($v1) && is_numeric ($v2)) ?
-				$v1 <=> $v2
-				:
-				$v1 cmp $v2
+            ($v1, $v2) = ($$a[$$q{sort_by}], $$b[$$q{sort_by}]);
+            (is_numeric ($v1) && is_numeric ($v2))
+                ? $v1 <=> $v2
+                : $v1 cmp $v2
         } @{$$q{ps}};
     }
 
@@ -363,11 +372,10 @@ package Killer;
 
         my ($v1, $v2, );
         return sort {
-			($v1, $v2) = ($$a[$$q{sort_by}], $$b[$$q{sort_by}]);
-			(is_numeric ($v1) && is_numeric ($v2)) ?
-				$v2 <=> $v1
-				:
-				$v2 cmp $v1
+            ($v1, $v2) = ($$a[$$q{sort_by}], $$b[$$q{sort_by}]);
+            (is_numeric ($v1) && is_numeric ($v2))
+                ? $v2 <=> $v1
+                : $v2 cmp $v1
 
         } @{$$q{ps}};
     }
@@ -391,10 +399,7 @@ package Killer;
 
     sub kill_processes {
         my ($signal, @ps, ) = @_;
-
-        my $ps = join (' ', grep { $_ != $$ } @ps);
-        `kill $ps`;
-        return 1;
+        return kill ($signal, grep { $_ != $$ } @ps);
     }
 
     sub kill_execute {
@@ -408,8 +413,23 @@ package Killer;
         return 0;
     }
 
+    sub queryencode {
+        my ($self, $q, $params, ) = @_;
+
+        my ($qdata, $ret, );
+        $qdata = (defined ($$q{method}) ? dclone ($$self{$$q{method}}) : {});
+        @$qdata{keys (%$params)} = values (%$params);
+
+        $ret = ($$q{root} || $ENV{SCRIPT_URL});
+        $ret .= index ('?', $ret) > -1 ? ($$q{amp} // '&amp;') : '?';
+
+        $ret .= join (($$q{amp} // '&amp;'), map { uriencode ($_) .'='. uriencode ($$qdata{$_}) } keys (%$qdata));
+
+        return $ret;
+    }
+
     sub _render__table_headers {
-        my ($self, $root, ) = @_;
+        my ($self, ) = @_;
 
         my (@ret, $link, $fields, $sort, $field, );
 
@@ -418,14 +438,12 @@ package Killer;
             $sort = 'asc';
             $sort = 'desc' if ($field eq $$self{request}{sort_by} && $$self{request}{'sort'} eq 'asc');
 
-            $link = sprintf ('<a href="%s?sort_by=%s&amp;sort=%s">%s</a>',
-                $root,
-                $field,
-                $sort,
+            $link = sprintf ('<a href="%s">%s</a>',
+                $self->queryencode ({ method => 'request', }, { sort_by => $field, sort => $sort, }),
                 $field
             );
 
-            push (@ret, sprintf ('<th>%s</th>', $link));
+            push (@ret, "<th>$link</th>");
         }
 
         return join ("\n", @ret);
@@ -483,25 +501,24 @@ package Killer;
     sub render {
         my ($self, $data, ) = @_;
 
-        my ($ret, %data, );
+        my ($ret, %data, $pat, );
         %data = (
-            ROOT                => $$self{root},
-            TABLE_HEADERS       => $self->_render__table_headers ($$self{root}),
+            AUTO_REFRESH        => int ($$self{request}{auto_refresh}),
             COLUMNS_QUANT       => scalar (keys (%{$$self{fields}})) + 1,
-            SELECT_SIGNALS      => $self->_render__select_signals (),
             GET_SORT            => $$self{request}{'sort'},
             GET_SORT_BY         => $$self{request}{sort_by},
-            TABLE_BODY          => $self->_render__table_body ($data),
-            PS_OPTIONS          => $$self{request}{ps_options},
             GREP                => $$self{request}{grep},
-            AUTO_REFRESH        => int ($$self{request}{auto_refresh}),
+            PS_OPTIONS          => $$self{request}{ps_options},
+            ROOT                => $ENV{SCRIPT_URL},
             SELECT_GREP_COLUMN  => $self->_render__select_grep_columns (),
+            SELECT_SIGNALS      => $self->_render__select_signals (),
+            TABLE_BODY          => $self->_render__table_body ($data),
+            TABLE_HEADERS       => $self->_render__table_headers (),
         );
 
         $ret = $template;
-        foreach (keys (%data)) {
-            $ret =~ s/\{$_\}/$data{$_}/g;
-        }
+        $pat = join ('|', keys (%data));
+        $ret =~ s/\{($pat)\}/$data{$1}/g;
         return $ret;
     }
 
