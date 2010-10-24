@@ -4,9 +4,9 @@
 #
 # Version: 0.4
 # Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>
-# Copyright: (r) 2008 - 2009
+# Copyright: (r) 2008 - 2010
 # Program: wwwshell.php - shell access via browser
-# Date: 2009-03-15
+# Date: 2010-10-24
 # License: GPL v.2
 
 
@@ -231,19 +231,17 @@ if (isset ($_GET['ajax'])) {
             $_SESSION['fontsize'] = (int) $_GET['fontsize'];
         }
     }
+
     else if (isset ($_GET['get_cwd'])) {
         echo $_SESSION['cwd'];
     }
-
 
     if (!isset ($_GET['execute'])) {
         die;
     }
 }
 
-
 $results = '';
-
 
 # prepend console history
 if (isset ($_SESSION['results'])) {
@@ -341,29 +339,31 @@ if (isset ($_GET['ajax'])) {
     <head>
         <title>wwwShell (c)2008-<?php echo date ('Y'); ?>, Marcin Sztolcman</title>
         <meta http-equiv="Content-Type" content="text/html;charset=<?php echo CHARSET; ?>" />
-        <script type="text/javascript" src="http://code.jquery.com/jquery-1.2.6.pack.js"></script>
-        <script type="text/javascript" src="http://view.jquery.com/tags/plugins/autocomplete/1.0.2/jquery.autocomplete.pack.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js"></script>
         <script type="text/javascript">
             var WWWShell = {
                 history: new Array (<?php echo join (', ', $_SESSION['history']); ?>)
             };
 
             function scrollResults () {
-                e = $('#results');
+                var e = $('#results');
                 e.attr ('scrollTop', e.attr ('scrollHeight'));
             }
+
             function catchNaviFonts () {
                 $ ('#fontDown').click (function () {
-                    fontSize ("-1");
+                    setFontSize ("-1");
                 });
                 $ ('#fontUp').click (function () {
-                    fontSize ("+1");
+                    setFontSize ("+1");
                 });
                 $ ('#fontStd').click (function () {
-                    fontSize ("12");
+                    setFontSize ("12");
                 });
             }
-            function fontSize (offset) {
+
+            function setFontSize (offset) {
                 var value = offset.match (/^(\+|-)?(\d+)$/);
                 if (!value) return;
 
@@ -381,81 +381,98 @@ if (isset ($_GET['ajax'])) {
                     fs = parseInt (value[2]);
                 }
 
-                $.get ("<?php echo $script_uri; ?>", {ajax: 1, fontsize: fs});
+                $.get ("<?php echo $script_uri; ?>", { ajax: 1, fontsize: fs });
 
                 e.css ('font-size', fs);
+            }
+
+            function command_click_action (e, ui) {
+                var cmd = (ui && ui.item && ui.item.value ? ui.item.value : $('#command').val ().replace (/^\s*|\s$/g, ''));
+                if (!cmd) {
+                    return false;
+                }
+
+                $('#execute').attr ('disabled', 'disabled');
+                $.get (
+                    "<?php echo $script_uri ?>",
+                    {
+                        ajax:       1,
+                        execute:    1,
+                        command:    cmd
+                    },
+                    function (data) {
+                        $('#results').html (data);
+                        $('#command').val ('');
+                        scrollResults ();
+                        $('#execute').removeAttr ('disabled');
+
+                        if (
+                            WWWShell.history.indexOf (cmd) < 0 &&
+                            WWWShell.history.unshift (cmd) > <?php echo HISTORY_MAX; ?>
+                        ) {
+                            WWWShell.history = WWWShell.history.slice (0, <?php echo HISTORY_MAX; ?>);
+                        }
+                    }
+                );
+
+                // pobieramy pwd
+                $.get (
+                    "<?php echo $script_uri; ?>",
+                    {
+                        ajax:       1,
+                        get_cwd:    1
+                    },
+                    function (data) {
+                        $('#cwd').text ('> ' + data);
+                    }
+                );
+
+                if (!ui) {
+                    return false;
+                }
             }
 
             function start_onload () {
                 scrollResults ();
                 catchNaviFonts ();
-                $('#command').autocomplete (WWWShell.history,
-                    {
-                        autoFill:       true,
-                        cacheLength:    <?php echo HISTORY_MAX; ?>,
-                        max:            <?php echo HISTORY_MAX; ?>,
-                        minChars:       0
+                $('#command').autocomplete ({
+                    source      : WWWShell.history,
+                    minLength   : 1,
+                    delay       : 0,
+                    select      : command_click_action,
+                    search      : function (e, ui) {
+                        //updating source list on every search
+                        $('#command').autocomplete ({ source: WWWShell.history })
                     }
-                ).focus ();
+                })
+                .focus ()
+                .keydown (function (e) {
+                    if (e.keyCode === $.ui.keyCode.ENTER && $('.ui-autocomplete').is (':visible')) {
+                        $('#command').autocomplete ("close");
+                        command_click_action (e);
+                    }
+                });
 
-                $('#clear_history').click(function () {
-                    $.get ("<?php echo $script_uri; ?>", {ajax: 1, clear_history: 1});
-                    WWWShell.history.data = new Array ();
+                $('#clear_history').click (function () {
+                    $.get ("<?php echo $script_uri; ?>", { ajax: 1, clear_history: 1 });
+                    WWWShell.history = new Array ();
+                    $('#command').focus ();
                     return false;
                 });
 
-                $('#clear_results').click(function () {
-                    $.get ("<?php echo $script_uri; ?>", {ajax: 1, clear_results: 1});
+                $('#clear_results').click (function () {
+                    $.get ("<?php echo $script_uri; ?>", { ajax: 1, clear_results: 1 });
                     $('#results').html ('');
+                    $('#command').focus ();
                     return false;
                 });
 
-                $('#execute').click(function () {
-                    var cmd = $('#command').val ().replace (/^\s*|\s$/g, '');
-                    if (!cmd) {
-                        return false;
-                    }
-
-                    $(this).attr ('disabled', 'disabled');
-                    $.get (
-                        "<?php echo $script_uri; ?>",
-                        {
-                            ajax:       1,
-                            execute:    1,
-                            command:    cmd
-                        },
-                        function (data) {
-                            $('#results').html (data);
-                            $('#command').val ('');
-                            scrollResults ();
-                            $('#execute').removeAttr ('disabled');
-
-                            if (
-                                WWWShell.history.indexOf (cmd) < 0 &&
-                                WWWShell.history.unshift (cmd) > <?php echo HISTORY_MAX; ?>
-                            ) {
-                                WWWShell.history = WWWShell.history.slice (0, <?php echo HISTORY_MAX; ?>);
-                            }
-                            $('#command').setOptions ({ data: WWWShell.history });
-                        }
-                    );
-
-                    // pobieramy pwd
-                    $.get (
-                        "<?php echo $script_uri; ?>",
-                        {
-                            ajax:       1,
-                            get_cwd:    1
-                        },
-                        function (data) {
-                            $('#cwd').text ('> ' + data);
-                        }
-                    );
-
-                    return false;
-                });
+                $('#execute').click (command_click_action);
             }
+
+            $(start_onload);
         </script>
+        <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/themes/base/jquery-ui.css" type="text/css" media="all" />
         <style type="text/css">
             body {
                 font-family: "DejaVu Sans Mono", "Lucida Console", Courier, "Courier New", monospace;
@@ -501,58 +518,9 @@ if (isset ($_GET['ajax'])) {
                 border-top: 1px solid black;
                 padding-top: 1em;
             }
-            .ac_results {
-                padding: 0px;
-                border: 1px solid black;
-                background-color: white;
-                overflow: hidden;
-                z-index: 99999;
-            }
-
-            .ac_results ul {
-                width: 100%;
-                list-style-position: outside;
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-
-            .ac_results li {
-                margin: 0px;
-                padding: 2px 5px;
-                cursor: default;
-                display: block;
-                /*
-                if width will be 100% horizontal scrollbar will apear
-                when scroll mode will be used
-                */
-                /*width: 100%;*/
-                font: menu;
-                font-size: 12px;
-                /*
-                it is very important, if line-height not setted or setted
-                in relative units scroll will be broken in firefox
-                */
-                line-height: 16px;
-                overflow: hidden;
-            }
-
-            .ac_loading {
-                background: white url('indicator.gif') right center no-repeat;
-            }
-
-            .ac_odd {
-                background-color: #eee;
-            }
-
-            .ac_over {
-                background-color: #0A246A;
-                color: white;
-            }
-
         </style>
     </head>
-    <body onload="start_onload ()">
+    <body>
         <form method="get" action="">
             <div id="navi">
                 <span class="navi" id="fontDown" title="Shrink font size in results window">--A</span>
