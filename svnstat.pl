@@ -1,5 +1,4 @@
 #!/usr/bin/env perl
-# $Id: killer.pl 51 2009-01-28 08:40:40Z urzenia $
 # Program: svnstat.pl - subversion repo statistics
 # Version: 1.1.1
 # Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>
