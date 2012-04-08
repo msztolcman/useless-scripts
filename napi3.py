@@ -1,8 +1,8 @@
-#!/usr/bin/env python3 -W ignore
+#!/usr/bin/env python3
 
-__version__   = 'version 0.5'
+__version__   = 'version 0.6'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net> (based od napi.py from http://hacking.apcoh.com/2008/01/napi_06.html - 0.15b)'
-__copyright__ = '(r) 2008 - 2009'
+__copyright__ = '(r) 2008 - 2012'
 __program__   = 'napi.py - find and download polish subtitles for films (from http://www.napiprojekt.pl/)'
 __date__      = '2008-11-21'
 __license__   = 'GPL v.2'
