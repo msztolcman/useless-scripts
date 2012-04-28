@@ -1,6 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# $Id$
 
 from __future__ import with_statement
 
