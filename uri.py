@@ -34,7 +34,7 @@ def main ():
     parser = argparse.ArgumentParser (description='URI data encode or decode')
     parser.add_argument ('-d', '--decode', action='store_true', help='decode data if given')
     parser.add_argument ('-s', '--space_as_plus', action='store_false', help='encode/decode space as plus sign instead of %%20')
-    parser.add_argument ('input', help='data to process')
+    parser.add_argument ('input', nargs='?', help='data to process')
 
     args = parser.parse_args ()
 
