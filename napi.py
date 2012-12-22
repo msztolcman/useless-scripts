@@ -3,11 +3,11 @@
 
 from __future__ import with_statement
 
-__version__   = 'version 0.6'
+__version__   = 'version 0.7'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net> (based od napi.py from http://hacking.apcoh.com/2008/01/napi_06.html - 0.15b)'
 __copyright__ = '(r) 2008 - 2012'
 __program__   = 'napi.py - find and download polish subtitles for films (from http://www.napiprojekt.pl/)'
-__date__      = '2008-11-21'
+__date__      = '2012-12-22'
 __license__   = 'GPL v.2'
 
 __desc__      = '''%(desc)s
@@ -106,9 +106,7 @@ def has_subtitle (film):
     return os.path.isfile (p[0] + '.txt')
 
 def is_film (path):
-    if os.path.isfile (path) and re.search ('\.(?:avi|mpe?g|mp4|mkv|rmvb)$', path, re.I):
-        return True
-    return False
+    return os.path.isfile (path) and re.search ('\.(?:avi|mpe?g|mp4|mkv|rmvb)$', path.lower ())
 
 def find_films__recursive (path):
     ret = []
