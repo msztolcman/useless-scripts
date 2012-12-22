@@ -31,25 +31,6 @@ try:
 except ImportError:
     from urllib import quote_plus, unquote_plus, quote, unquote
 
-__version__   = 'version 0.1'
-__author__    = 'Marcin Sztolcman <marcin@urzenia.net>'
-__copyright__ = '(r) 2012'
-__program__   = 'uri.py - encode/decode URI data'
-__date__      = '2012-05-26'
-__license__   = 'GPL v.2'
-
-__desc__      = '''%(desc)s
-%(author)s %(copyright)s
-license: %(license)s
-version %(version)s (%(date)s)''' % {
-  'desc': __program__,
-  'author': __author__,
-  'copyright': __copyright__,
-  'license': __license__,
-  'version': __version__,
-  'date': __date__
-}
-
 def main ():
     parser = argparse.ArgumentParser (description='URI data encode or decode')
     parser.add_argument ('-d', '--decode', action='store_true', help='decode data if given')
@@ -78,3 +59,4 @@ def main ():
 
 if __name__ == '__main__':
     main ()
+
