@@ -90,10 +90,8 @@ if all_chars == 0:
 
 random.seed ()
 for j in range (quant):
-    print ('j', j)
     passwd = ''
     for i in range (length):
-        print ('i', i)
         passwd += random.choice (chars)
     print (passwd)
 
