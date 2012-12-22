@@ -25,15 +25,31 @@ import base64
 import getopt
 import sys
 
+def usage ():
+    print (
+        "%s [-f] [-l path] [-h] [-v] [data]\n"
+        "-f - decode from base64 (otherwise - encode to base64)\n"
+        "-l path - encode/decode path, if [data] is missing\n"
+        "-h - this help\n"
+        "-v - version"
+            % os.path.basename (sys.argv[0])
+    )
+
 if __name__ == '__main__':
     direction = 'to'
     file_ = None
-    opts, args = getopt.gnu_getopt (sys.argv[1:], 'ftl:')
+    opts, args = getopt.gnu_getopt (sys.argv[1:], 'fthvl:')
     for o, a in opts:
         if o == '-f':
             direction = 'from'
         elif o == '-l':
             file_ = a
+        elif o == '-h':
+            usage ()
+            sys.exit (0);
+        elif o == '-v':
+            print (__desc__)
+            sys.exit (0)
 
     if direction == 'to':
         func = base64.b64encode
