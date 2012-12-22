@@ -154,7 +154,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
         opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
     except getopt.GetoptError, e:
         print (e)
-        sys.exit 1)
+        sys.exit (1)
 
     recursive       = False
     directory       = False
@@ -164,10 +164,10 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     for o, a in opts:
         if o in ('-h', '--help'):
             print (usage)
-            sys.exit 0)
+            sys.exit (0)
         elif o in ('-v', '--version'):
             print (__version__)
-            sys.exit 0)
+            sys.exit (0)
         elif o in ('-d', '--directory'):
             directory = True
         elif o in ('-r', '--recursive'):
@@ -210,7 +210,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
 
     if not fnames:
         print ('Cannot find any film.')
-        sys.exit 2)
+        sys.exit (2)
 
     # find longest filename
     length = max (map (len, fnames)) + 1
