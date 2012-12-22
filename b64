@@ -23,6 +23,7 @@ version %(version)s (%(date)s)''' % {
 
 import base64
 import getopt
+import os.path
 import sys
 
 def usage ():
