@@ -1,24 +1,23 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id$
 
-__version__   = 'version 0.3.1'
+__version__   = 'version 0.3.2'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
-__copyright__ = '(r) 2004 - 2009'
+__copyright__ = '(r) 2004 - 2012'
 __program__   = 'genpass.py - generate secure passwords'
-__date__      = '2009-01-28'
+__date__      = '2012-12-22'
 __license__   = 'GPL v.2'
 
 __desc__      = '''%(desc)s
 %(author)s %(copyright)s
 license: %(license)s
 version %(version)s (%(date)s)''' % {
-  'desc': __program__,
-  'author': __author__,
-  'copyright': __copyright__,
-  'license': __license__,
-  'version': __version__,
-  'date': __date__
+    'desc': __program__,
+    'author': __author__,
+    'copyright': __copyright__,
+    'license': __license__,
+    'version': __version__,
+    'date': __date__
 }
 
 
@@ -28,19 +27,19 @@ import os.path
 import random
 import sys
 
-USAGE = '''%s [-l|--letters] [-b|--bigletters] [-d|--digits] [-c|--chars] [-s|--special] [-g|--length length] [-q|--quant quant] [-h|--help]
+USAGE = '''%s [-l|--letters] [-b|--bigletters] [-d|--digits] [-c|--chars] [-s|--special] [-g|--length length] [-q|--quant quant] [-h|--help] [-v|--version]
 DEFAULT:
     %s --letters --length=8 --quant=1''' % (os.path.basename (sys.argv[0]), os.path.basename (sys.argv[0]))
 
 def exit (code, msg):
-  print (msg, file=sys.stderr)
-  raise SystemExit (code)
+    print (msg, file=sys.stderr)
+    sys.exit (code)
 
 
 
 # opcje
-opts_short  = 'lbdcsq:g:h'
-opts_long   = ('letters', 'bigletters', 'digits', 'chars', 'special', 'quant=', 'length=', 'help')
+opts_short  = 'lbdcsq:g:hv'
+opts_long   = ('letters', 'bigletters', 'digits', 'chars', 'special', 'quant=', 'length=', 'help', 'version')
 try:
     opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
 except getopt.GetoptError:
@@ -50,48 +49,50 @@ quant   = 1
 length  = 8
 
 # zestawy znakow
-z1      =r'qwertyuiopasdfghjklzxcvbnm'
-z2      =r'QWERTYUIOPASDFGHJKLZXCVBNM'
-z3      =r'1234567890'
-z4      =r'!@#$%^&*_+=-~;:.>,<?'
-z5      =r'''`(){}[]'"\|/'''
+z1 = r'qwertyuiopasdfghjklzxcvbnm'
+z2 = r'QWERTYUIOPASDFGHJKLZXCVBNM'
+z3 = r'1234567890'
+z4 = r'!@#$%^&*_+=-~;:.>,<?'
+z5 = r'''`(){}[]'"\|/'''
 
 # ustalamy zestaw z ktorego losujemy
 chars = r''
 for o, a in opts:
-  if o in ('-h', '--help'):
-    exit (0, USAGE)
-  elif o in ('-l', '--letters'):
-    chars += z1
-  elif o in ('-b', '--bigletters'):
-    chars += z2
-  elif o in ('-d', '--digits'):
-    chars += z3
-  elif o in ('-c', '--chars'):
-    chars += z4
-  elif o in ('-s', '--special'):
-    chars += z5
-  elif o in ('-q', '--quant'):
-    quant = a
-  elif o in ('-g', '--length'):
-    length = a
+    if o in ('-h', '--help'):
+        exit (0, USAGE)
+    elif o in ('-v', '--version'):
+        exit (0, __desc__)
+    elif o in ('-l', '--letters'):
+        chars += z1
+    elif o in ('-b', '--bigletters'):
+        chars += z2
+    elif o in ('-d', '--digits'):
+        chars += z3
+    elif o in ('-c', '--chars'):
+        chars += z4
+    elif o in ('-s', '--special'):
+        chars += z5
+    elif o in ('-q', '--quant'):
+        quant = a
+    elif o in ('-g', '--length'):
+        length = a
 
 try:
-  length    = int (length)
-  quant     = int (quant)
+    length  = int (length)
+    quant   = int (quant)
 except:
-  exit (2, USAGE)
+    exit (2, USAGE)
 
 all_chars = len (chars)
 if all_chars == 0:
-  chars = z1[:]
-  all_chars = len (chars)
+    chars = z1[:]
+    all_chars = len (chars)
 
 random.seed ()
 for j in range (quant):
-	passwd = ''
-	for i in range (length):
-		passwd += random.choice (chars)
-	print (passwd)
+    passwd = ''
+    for i in range (length):
+        passwd += random.choice (chars)
+    print (passwd)
 
 # vim: ft=python
