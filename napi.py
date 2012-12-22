@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from __future__ import with_statement
+from __future__ import with_statement, print_function
 
 __version__   = 'version 0.7'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net> (based od napi.py from http://hacking.apcoh.com/2008/01/napi_06.html - 0.15b)'
@@ -153,8 +153,8 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     try:
         opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
     except getopt.GetoptError, e:
-        print e
-        raise SystemExit (1)
+        print (e)
+        sys.exit 1)
 
     recursive       = False
     directory       = False
@@ -163,11 +163,11 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     overwrite       = False
     for o, a in opts:
         if o in ('-h', '--help'):
-            print usage
-            raise SystemExit (0)
+            print (usage)
+            sys.exit 0)
         elif o in ('-v', '--version'):
-            print __version__
-            raise SystemExit (0)
+            print (__version__)
+            sys.exit 0)
         elif o in ('-d', '--directory'):
             directory = True
         elif o in ('-r', '--recursive'):
@@ -209,8 +209,8 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
         fnames = [ f for f in fnames if not has_subtitle (f) ]
 
     if not fnames:
-        print 'Cannot find any film.'
-        raise SystemExit (2)
+        print ('Cannot find any film.')
+        sys.exit 2)
 
     # find longest filename
     length = max (map (len, fnames)) + 1
@@ -223,7 +223,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
         else:
             status = u'not found'
         fname += ' '
-        print u'%s: %s' % (fname.ljust (length, '-'), status)
+        print (u'%s: %s' % (fname.ljust (length, '-'), status))
 
 
 if __name__ == '__main__':
