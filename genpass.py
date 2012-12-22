@@ -14,12 +14,12 @@ __desc__      = '''%(desc)s
 %(author)s %(copyright)s
 license: %(license)s
 version %(version)s (%(date)s)''' % {
-  'desc': __program__,
-  'author': __author__,
-  'copyright': __copyright__,
-  'license': __license__,
-  'version': __version__,
-  'date': __date__
+    'desc': __program__,
+    'author': __author__,
+    'copyright': __copyright__,
+    'license': __license__,
+    'version': __version__,
+    'date': __date__
 }
 
 
@@ -29,7 +29,7 @@ import os.path
 import random
 import sys
 
-USAGE = '''%s [-l|--letters] [-b|--bigletters] [-d|--digits] [-c|--chars] [-s|--special] [-g|--length length] [-q|--quant quant] [-h|--help]
+USAGE = '''%s [-l|--letters] [-b|--bigletters] [-d|--digits] [-c|--chars] [-s|--special] [-g|--length length] [-q|--quant quant] [-h|--help] [-v|--version]
 DEFAULT:
     %s --letters --length=8 --quant=1''' % (os.path.basename (sys.argv[0]), os.path.basename (sys.argv[0]))
 
