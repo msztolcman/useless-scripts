@@ -1,6 +1,5 @@
 #!/usr/bin/env python2.5
 # -*- coding: utf-8 -*-
-# $Id$
 
 __version__   = 'version 0.2'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
@@ -40,15 +39,15 @@ re_type         = type (re.compile (''))
 
 def human_size (size):
     if size < 1024:
-        return '%0.2f B' % size
+        return '%.2f B' % size
     elif size < 1024 ** 2:
-        return '%0.2f kB' % (size / 1024.0)
+        return '%.2f kB' % (size / 1024.0)
     elif size < 1024 ** 3:
-        return '%0.2f MB' % (size / 1024.0 / 1024.0)
+        return '%.2f MB' % (size / 1024.0 / 1024.0)
     elif size < 1024 ** 4:
-        return '%0.2f GB' % (size / 1024.0 / 1024.0 / 1024.0)
+        return '%.2f GB' % (size / 1024.0 / 1024.0 / 1024.0)
     else:
-        return '%0.2f TB' % (size / 1024.0 / 1024.0 / 1024.0 / 1024.0)
+        return '%.2f TB' % (size / 1024.0 / 1024.0 / 1024.0 / 1024.0)
 
 def parse_threshold (thr):
     thr = str (thr)
@@ -136,6 +135,7 @@ def scan_dir (path, to_skip=None):
     return data
 
 def main ():
+    global show_omitted, human_size, threshold, output
     usage = '''%s [-n|--no-human] [-o|--output -] [-t|--threshold 1M] [-s|--show-omitted] [-x|--exclude *str*] [-d|--debug] [-l|--follow-links] [-r|--exclude-regexp ^regexp$]''' % (os.path.basename (sys.argv[0]), )
     # parsowanie argumntow
     try:
