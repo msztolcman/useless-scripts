@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-__version__   = 'version 0.6'
+__version__   = 'version 0.7'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net> (based od napi.py from http://hacking.apcoh.com/2008/01/napi_06.html - 0.15b)'
 __copyright__ = '(r) 2008 - 2012'
 __program__   = 'napi.py - find and download polish subtitles for films (from http://www.napiprojekt.pl/)'
-__date__      = '2008-11-21'
+__date__      = '2012-12-22'
 __license__   = 'GPL v.2'
 
 __desc__      = '''%(desc)s
@@ -98,9 +98,7 @@ def has_subtitle (film):
     return os.path.isfile (p[0] + '.txt')
 
 def is_film (path):
-    if os.path.isfile (path) and re.search ('\.(?:avi|mpe?g|mp4|mkv|rmvb)$', path, re.I):
-        return True
-    return False
+    return os.path.isfile (path) and re.search ('\.(?:avi|mpe?g|mp4|mkv|rmvb)$', path.lower ())
 
 def find_films__recursive (path):
     ret = []
@@ -148,7 +146,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
         opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
     except getopt.GetoptError as e:
         print (e)
-        raise SystemExit (1)
+        sys.exit (1)
 
     recursive       = False
     directory       = False
@@ -158,10 +156,10 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     for o, a in opts:
         if o in ('-h', '--help'):
             print (usage)
-            raise SystemExit (0)
+            sys.exit (0)
         elif o in ('-v', '--version'):
             print (__version__)
-            raise SystemExit (0)
+            sys.exit (0)
         elif o in ('-d', '--directory'):
             directory = True
         elif o in ('-r', '--recursive'):
@@ -204,7 +202,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
 
     if not fnames:
         print ('Cannot find any film.')
-        raise SystemExit (2)
+        sys.exit (2)
 
     # find longest filename
     length = max (map (len, fnames)) + 1
