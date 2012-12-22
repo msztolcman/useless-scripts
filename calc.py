@@ -3,11 +3,11 @@
 
 from __future__ import print_function
 
-__version__   = 'version 0.1'
+__version__   = 'version 0.2'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
 __copyright__ = '(r) 2012'
-__program__   = 'math - simple math operation on it\'s stdin'
-__date__      = '2012-04-28'
+__program__   = 'calc - simple math operation on it\'s stdin'
+__date__      = '2012-12-22'
 __license__   = 'GPL v.2'
 
 __desc__      = '''%(desc)s
