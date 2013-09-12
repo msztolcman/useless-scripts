@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# $Id$
 
 __version__   = 'version 0.1'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
