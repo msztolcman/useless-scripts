@@ -1,5 +1,4 @@
 #!/usr/bin/env perl
-# $Id$
 
 # Version: 0.3
 # Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>
