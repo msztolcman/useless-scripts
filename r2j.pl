@@ -1,5 +1,4 @@
 #!/usr/bin/env perl5.10.0
-# $Id$
 # Program: r2j.pl - extracting jpegs embedded in raws
 # Version: 0.2
 # Author: Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>

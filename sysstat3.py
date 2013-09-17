@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 -tt
+#!/usr/bin/env python3
 
 import os, os.path
 import sys
@@ -13,9 +13,9 @@ class Stat (object):
         elif size < 1024 ** 2:
             return '%d MB' % (size/1024)
         elif size < 1024 ** 3:
-            return '%d GB' % (size/1024**2)
+            return '%.2f GB' % (size/float (1024**2))
         else:
-            return '%d TB' % (size/1024**3)
+            return '%.2f TB' % (size/float (1024**3))
 
     size2other = dict (
         size2b      = lambda size: '%d B' % (int (size) * 1024),

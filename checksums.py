@@ -77,4 +77,3 @@ if __name__ == '__main__':
         for t in sorted (types):
             print (t.upper ().ljust (10) + ':', cks[t])
         print ()
-
