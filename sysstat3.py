@@ -35,7 +35,10 @@ class Stat (object):
         self.read_processes ()
 
     def read_processes (self):
-        pax = subprocess.getoutput ('ps awux').split ("\n")[1:]
+        pax = subprocess.Popen(['ps', 'awux'], stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        pax.wait()
+        pax = pax.stdout.read().strip()
+        pax = pax.decode('utf-8', 'ignore').split("\n")[1:]
 
         if len (pax) < self._quant:
             self._quant = len (pax)
