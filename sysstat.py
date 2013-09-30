@@ -117,7 +117,9 @@ def main ():
             print 'version'
             raise SystemExit
         elif o in ('-h', '--help'):
-            print 'help'
+            print (('%s [-b|--byte] [-k|--kilo] [-g|--giga] [-m|--mega] [-u|--human] '
+                   '[-q|--quant QUANTITY] [-l|--legend] [-t|--type mem|cpu] [-v|--version] '
+                   '[-h|--help]') % os.path.basename(sys.argv[0]))
             raise SystemExit
 
     pax = stats[setts['type']] (setts)
