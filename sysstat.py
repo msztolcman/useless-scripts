@@ -38,8 +38,8 @@ class Stat(object):
 
     def read_processes(self):
         pax = subprocess.Popen(['ps', 'awux'], stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-        pax.wait()
-        pax = pax.stdout.read().strip()
+        pax, _ = pax.communicate()
+        pax = pax.strip()
         pax = pax.decode('utf-8', 'ignore').split("\n")[1:]
 
         if len(pax) < self._quant:
