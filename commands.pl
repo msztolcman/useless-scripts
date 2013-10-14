@@ -26,6 +26,7 @@ my (%CMD_PARSERS, %FILE_PARSERS, %SHELL_FILE, );
 %CMD_PARSERS = (
     git => \&_cmd_parser_git,
     svn => \&_cmd_parser_git,
+    sudo => \&_cmd_parser_git,
 );
 
 %FILE_PARSERS = (
