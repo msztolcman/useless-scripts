@@ -215,7 +215,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
         else:
             status = 'not found'
         fname += ' '
-        print ('%s: %s' % (fname.ljust (length, '-'), status))
+        print ('%s: %s' % (fname.decode('utf-8').ljust (length, '-'), status))
 
 
 if __name__ == '__main__':
