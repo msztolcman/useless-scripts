@@ -3,11 +3,11 @@
 
 from __future__ import with_statement, print_function
 
-__version__   = 'version 0.1'
+__version__   = 'version 0.2'
 __author__    = 'Marcin Sztolcman <marcin@urzenia.net>'
 __copyright__ = '(r) 2012'
 __program__   = 'find_same_files.py - find identical files using their checksums'
-__date__      = '2012-12-22'
+__date__      = '2014-04-13'
 __license__   = 'GPL v.2'
 
 __desc__      = '''%(desc)s
@@ -65,6 +65,20 @@ def debug(*a):
         return
     print('DEBUG:', ", ".join( [str(i) for i in a] ))
 
+def calculate_csum(path, size=0):
+    csum = hashlib.md5()
+    to_read = size if size > 0 else os.path.getsize(path)
+
+    with open(path) as fh:
+        while to_read > 0:
+            length = max(to_read, 4 * 1024 * 1024)
+            data = fh.read(length)
+            if data:
+                csum.update(data)
+            to_read -= length
+
+    return csum.hexdigest()
+
 FILES = {}
 for root, dirs, files in os.walk(ROOT):
     for f in files:
@@ -80,15 +94,14 @@ for root, dirs, files in os.walk(ROOT):
                 s = MAX_SIZE
             debug('SIZE:', s)
 
-            with open(path) as fh:
-                md5sum = hashlib.md5(fh.read(s)).hexdigest()
-                debug('MD5SUM:', md5sum)
+            csum = calculate_csum(path, s)
+            debug('CHECKSUM:', csum)
 
             ret = (path, s)
             try:
-                FILES[md5sum].append(ret)
+                FILES[csum].append(ret)
             except KeyError:
-                FILES[md5sum] = [ ret, ]
+                FILES[csum] = [ ret, ]
         except Exception, e:
             print('ERROR:', e, type(e))
 
