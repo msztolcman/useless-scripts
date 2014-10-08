@@ -94,7 +94,7 @@ def scan_dir (path, to_skip=None):
     data = {}
     # iterowanie po katalogu
     for root, dirs, files in os.walk (os.path.realpath (path)):
-        debug ('d: ' + root)
+        debug ('d: %s' % root)
 
         # sprawdzamy czy nie pomijamy katalogu (to_skip)
         if excluded (root, to_skip):
@@ -108,7 +108,7 @@ def scan_dir (path, to_skip=None):
         size = 0
         for file in files:
             path = os.path.join (root, file)
-            debug ('f: ' + path)
+            debug ('f: %s' % path)
             if os.path.islink (path):
                 debug ('islink', '')
                 continue
@@ -118,7 +118,7 @@ def scan_dir (path, to_skip=None):
                 size += data[root][file]
                 debug ('ok')
             except OSError, e:
-                debug ('ERROR: ' + e, force=true)
+                debug ('ERROR: %s' % e, force=true)
 
         # meta dane o katalogu
         data[root]['.'] = { 'dirs': dirs, 'size': size, 'depth': len (root.split ('/')) - 1 }
