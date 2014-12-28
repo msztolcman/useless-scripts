@@ -118,7 +118,7 @@ def scan_dir (path, to_skip=None):
                 size += data[root][file]
                 debug ('ok')
             except OSError, e:
-                debug ('ERROR: %s' % e, force=true)
+                debug ('ERROR: %s' % e, force=True)
 
         # meta dane o katalogu
         data[root]['.'] = { 'dirs': dirs, 'size': size, 'depth': len (root.split ('/')) - 1 }
