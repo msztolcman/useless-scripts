@@ -3,9 +3,9 @@
 
 from __future__ import with_statement, print_function
 
-__version__   = 'version 0.7'
+__version__   = 'version 0.8'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net> (based od napi.py from http://hacking.apcoh.com/2008/01/napi_06.html - 0.15b)'
-__copyright__ = '(r) 2008 - 2012'
+__copyright__ = '(r) 2008 - 2014'
 __program__   = 'napi.py - find and download polish subtitles for films (from http://www.napiprojekt.pl/)'
 __date__      = '2012-12-22'
 __license__   = 'GPL v.2'
@@ -145,11 +145,12 @@ def main ():
 -o|--output_dir     - specify directory when you want to save downloaded files. If not specified, try to save every subtitle in films directory
 -n|--no-validate    - if given, specified list of films will not be validated for being movie files (work only without -d parameter)
 -w|--overwrite      - if specified, existent subtitles will not be overwritten
+--verbose           - show info about every film, even if subtitles are not found
 input1 .. inputN    - if -d is not specified, this is treaten like films files, to which you want to download subtitles. In other case, this is list of directories whis are scanned for files''' % (os.path.basename (sys.argv[0]),)
 
     ## parsing getopt options
     opts_short  = 'hdo:rnw'
-    opts_long   = ['help', 'directory', 'output=', 'recursive', 'no-validate', 'overwrite']
+    opts_long = ['help', 'directory', 'output=', 'recursive', 'no-validate', 'overwrite', 'verbose']
     try:
         opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
     except getopt.GetoptError, e:
@@ -161,6 +162,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     output          = None
     validate        = True
     overwrite       = False
+    verbose         = False
     for o, a in opts:
         if o in ('-h', '--help'):
             print (usage)
@@ -178,6 +180,8 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
             validate = False
         elif o in ('-w', '--overwrite'):
             overwrite = True
+        elif o == '--verbose':
+            verbose = True
 
     ## find all films
     fnames = []
@@ -216,14 +220,23 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     length = max (map (len, fnames)) + 1
 
     ## download all subtitles
+    quant = {'found': 0, 'all': 0}
     for fname in fnames:
         r = get_subtitles (fname, output)
+        quant['all'] += 1
         if r:
+            quant['found'] += 1
             status = u'done'
+        elif not verbose:
+            continue
         else:
             status = u'not found'
         fname += ' '
         print (u'%s: %s' % (fname.decode('utf-8').ljust (length, '-'), status))
+
+    if fnames:
+        print()
+    print('Searched for subtitles to %(all)d films, found %(found)d' % quant)
 
 
 if __name__ == '__main__':
