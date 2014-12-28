@@ -220,12 +220,11 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     length = max (map (len, fnames)) + 1
 
     ## download all subtitles
-    quant = {'found': 0, 'all': 0}
+    found = 0
     for fname in fnames:
         r = get_subtitles (fname, output)
-        quant['all'] += 1
         if r:
-            quant['found'] += 1
+            found += 1
             status = u'done'
         elif not verbose:
             continue
@@ -236,7 +235,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
 
     if fnames:
         print()
-    print('Searched for subtitles to %(all)d films, found %(found)d' % quant)
+        print('Searched for subtitles to %d films, found %d' % (len(fnames), found, ))
 
 
 if __name__ == '__main__':
