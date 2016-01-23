@@ -110,7 +110,9 @@ def has_subtitle(film):
 
 
 def is_film(path):
-    return os.path.isfile(path) and re.search('\.(?:avi|mpe?g|mp4|mkv|rmvb|m4v|wmv|asf|ogm)$', path.lower())
+    return not os.path.basename(path).startswith('.') and \
+            os.path.isfile(path) and \
+            re.search('\.(?:avi|mpe?g|mp4|mkv|rmvb|m4v|wmv|asf|ogm)$', path.lower())
 
 
 def find_films__recursive(path):
