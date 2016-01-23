@@ -32,15 +32,15 @@ m = {
     'ą': 2, 'ć': 2, 'ę': 3, 'ł': 5, 'ń': 6, 'ó': 6, 'ś': 7, 'ż': 9, 'ź': 9,
 }
 
-if len (sys.argv) > 1:
+if len(sys.argv) > 1:
     word = sys.argv[1]
 else:
-    word = sys.stdin.read ()
+    word = sys.stdin.read()
 
-word = word.lower ()
+word = word.lower()
 for letter in word:
     try:
-        print (m[letter], sep='', end='')
+        print(m[letter], sep='', end='')
     except KeyError as e:
-        print (letter, sep='', end='')
-print ()
+        print(letter, sep='', end='')
+print()
