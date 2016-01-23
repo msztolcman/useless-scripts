@@ -37,6 +37,7 @@ if len(sys.argv) > 1:
 else:
     word = sys.stdin.read()
 
+word = word.decode('utf-8')
 word = word.lower()
 for letter in word:
     try:
