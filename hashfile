@@ -72,8 +72,12 @@ def main():
     for i in range(len(files)):
         file = files[i]
         algo = algorithms[i] if len(algorithms) > i else algorithms[-1]
-        hash = hash_file(file, algo=algo, max_input_read=args.max_input_read)
-        print('%s: %s %s' % (algo, hash.hexdigest(), file))
+        try:
+            hash = hash_file(file, algo=algo, max_input_read=args.max_input_read)
+        except (OSError, IOError) as exc:
+            print('ERROR: %s %s' % (file, str(exc)), file=sys.stderr)
+        else:
+            print('%s: %s %s' % (algo, hash.hexdigest(), file))
 
 if __name__ == '__main__':
     main()
