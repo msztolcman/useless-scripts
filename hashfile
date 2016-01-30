@@ -32,8 +32,32 @@ version %(version)s (%(date)s)''' % {
 }
 
 MAX_INPUT_READ = 4*1024**2
-AVAILABLE_ALGORITHMS = ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512', )
 DEFAULT_ALGORITHM = 'sha1'
+
+
+# pylint: disable=missing-docstring
+def _get_available_algorithms():
+    try:
+        available = hashlib.algorithms_available
+    except AttributeError:
+        try:
+            available = set(hashlib.algorithms)
+        except AttributeError:
+            available = {'md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'}
+
+    to_remove = set()
+    for algo in available:
+        lowered = algo.lower()
+        if algo != lowered and lowered in available:
+            to_remove.add(algo)
+
+    available = available - to_remove
+
+    result = list(available)
+    result.sort()
+    return result
+
+AVAILABLE_ALGORITHMS = _get_available_algorithms()
 
 
 def hash_file(file_path, algo='sha1', max_input_read=4*1024**2):
@@ -44,7 +68,7 @@ def hash_file(file_path, algo='sha1', max_input_read=4*1024**2):
     :param max_input_read:
     :return:
     """
-    hasher = getattr(hashlib, algo)()
+    hasher = hashlib.new(algo)
 
     fh = open(file_path, 'rb') if file_path != '-' else sys.stdin
     while True:
@@ -95,4 +119,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
