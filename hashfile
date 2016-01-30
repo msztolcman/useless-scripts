@@ -117,8 +117,12 @@ def main():
 
     if not args.files:
         filenames = ['-']
-    else:
+    # PYTHON2
+    elif hasattr(args.files[0], 'decode'):
         filenames = [filename.decode('utf-8') for filename in args.files]
+    # PYTHON3
+    else:
+        filenames = args.files
 
     for i, filename in enumerate(filenames):
         algo = algorithms[i] if len(algorithms) > i else algorithms[-1]
