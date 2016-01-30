@@ -31,44 +31,50 @@ MAX_INPUT_READ = 4*1024**2
 AVAILABLE_ALGORITHMS = ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512', )
 DEFAULT_ALGORITHM = 'sha1'
 
-def hash_file (file_path, algo='sha1', max_input_read=4*1024**2):
-    hash = getattr (hashlib, algo) ()
 
-    fh = open (file_path, 'rb') if file_path != '-' else sys.stdin
+def hash_file(file_path, algo='sha1', max_input_read=4*1024**2):
+    hash = getattr(hashlib, algo)()
+
+    fh = open(file_path, 'rb') if file_path != '-' else sys.stdin
     while True:
-        data = fh.read (max_input_read)
-        if not len (data):
+        data = fh.read(max_input_read)
+        if not len(data):
             break
 
-        hash.update (data)
+        hash.update(data)
 
     if file_path == '-':
-        fh.close ()
+        fh.close()
 
     return hash
 
-def main ():
-    parser = argparse.ArgumentParser (description='Calculate hash of some files', epilog='Algorithm can be also set from binary name (for example call program as sha1 to use sha1 algorithm).')
-    parser.add_argument ('-a', '--algorithm', default=[], action='append', choices=AVAILABLE_ALGORITHMS, help='algorithm used to calculate hash')
-    parser.add_argument ('--max_input_read', default=MAX_INPUT_READ, help='maximum data size for read at once')
-    parser.add_argument ('files', metavar='file', type=str, nargs='*', help='list of files')
 
-    args = parser.parse_args ()
+def main():
+    parser = argparse.ArgumentParser(description='Calculate hash of some files',
+        epilog='Algorithm can be also set from binary name (for example call program as sha1 to use sha1 algorithm).')
+    parser.add_argument('-a', '--algorithm', default=[], action='append', choices=AVAILABLE_ALGORITHMS,
+        help='algorithm used to calculate hash')
+    parser.add_argument('--max_input_read', default=MAX_INPUT_READ,
+        help='maximum data size for read at once')
+    parser.add_argument('files', metavar='file', type=str, nargs='*',
+        help='list of files')
 
-    if len (args.algorithm):
+    args = parser.parse_args()
+
+    if len(args.algorithm):
         algorithms = args.algorithm
-    elif os.path.basename (sys.argv[0]) in AVAILABLE_ALGORITHMS:
-        algorithms = [os.path.basename (sys.argv[0]), ]
+    elif os.path.basename(sys.argv[0]) in AVAILABLE_ALGORITHMS:
+        algorithms = [os.path.basename(sys.argv[0]), ]
     else:
         algorithms = [DEFAULT_ALGORITHM, ]
 
     files = args.files or ['-', ]
-    for i in range (len (files)):
+    for i in range(len(files)):
         file = files[i]
-        algo = algorithms[i] if len (algorithms) > i else algorithms[-1]
-        hash = hash_file (file, algo=algo, max_input_read=args.max_input_read)
-        print ('{}: {} {}'.format (algo, hash.hexdigest (), file))
+        algo = algorithms[i] if len(algorithms) > i else algorithms[-1]
+        hash = hash_file(file, algo=algo, max_input_read=args.max_input_read)
+        print('{}: {} {}'.format(algo, hash.hexdigest(), file))
 
 if __name__ == '__main__':
-    main ()
+    main()
 
