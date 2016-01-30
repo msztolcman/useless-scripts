@@ -115,7 +115,11 @@ def main():
     else:
         algorithms = [DEFAULT_ALGORITHM, ]
 
-    filenames = args.files or ['-', ]
+    if not args.files:
+        filenames = ['-']
+    else:
+        filenames = [filename.decode('utf-8') for filename in args.files]
+
     for i, filename in enumerate(filenames):
         algo = algorithms[i] if len(algorithms) > i else algorithms[-1]
         try:
