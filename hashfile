@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+Simple utility to calculate different types of hashes from given files/data
+"""
+
 from __future__ import print_function, unicode_literals
 
 import argparse
@@ -8,14 +12,14 @@ import hashlib
 import os
 import sys
 
-__version__   = 'version 0.1'
-__author__    = 'Marcin Sztolcman <marcin@urzenia.net>'
+__version__ = 'version 0.1'
+__author__ = 'Marcin Sztolcman <marcin@urzenia.net>'
 __copyright__ = '(r) 2012'
-__program__   = 'hashfile - calculate hash of given files'
-__date__      = '2012-05-22'
-__license__   = 'GPL v.2'
+__program__ = 'hashfile - calculate hash of given files'
+__date__ = '2012-05-22'
+__license__ = 'GPL v.2'
 
-__desc__      = '''%(desc)s
+__desc__ = '''%(desc)s
 %(author)s %(copyright)s
 license: %(license)s
 version %(version)s (%(date)s)''' % {
@@ -33,7 +37,14 @@ DEFAULT_ALGORITHM = 'sha1'
 
 
 def hash_file(file_path, algo='sha1', max_input_read=4*1024**2):
-    hash = getattr(hashlib, algo)()
+    """
+    Calculate hash
+    :param file_path: path or '-' for STDIN
+    :param algo:
+    :param max_input_read:
+    :return:
+    """
+    hasher = getattr(hashlib, algo)()
 
     fh = open(file_path, 'rb') if file_path != '-' else sys.stdin
     while True:
@@ -41,14 +52,15 @@ def hash_file(file_path, algo='sha1', max_input_read=4*1024**2):
         if not len(data):
             break
 
-        hash.update(data)
+        hasher.update(data)
 
     if file_path == '-':
         fh.close()
 
-    return hash
+    return hasher
 
 
+# pylint: disable=missing-docstring
 def main():
     parser = argparse.ArgumentParser(description='Calculate hash of some files',
         epilog='Algorithm can be also set from binary name (for example call program as sha1 to use sha1 algorithm).')
@@ -68,15 +80,15 @@ def main():
     else:
         algorithms = [DEFAULT_ALGORITHM, ]
 
-    files = args.files or ['-', ]
-    for i, file in enumerate(files):
+    filenames = args.files or ['-', ]
+    for i, filename in enumerate(filenames):
         algo = algorithms[i] if len(algorithms) > i else algorithms[-1]
         try:
-            hash = hash_file(file, algo=algo, max_input_read=args.max_input_read)
+            filehash = hash_file(filename, algo=algo, max_input_read=args.max_input_read)
         except (OSError, IOError) as exc:
-            print('ERROR: %s %s' % (file, str(exc)), file=sys.stderr)
+            print('ERROR: %s %s' % (filename, str(exc)), file=sys.stderr)
         else:
-            print('%s: %s %s' % (algo, hash.hexdigest(), file))
+            print('%s: %s %s' % (algo, filehash.hexdigest(), filename))
 
 if __name__ == '__main__':
     main()
