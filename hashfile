@@ -63,9 +63,12 @@ def hash_file(file_path, algo='sha1', max_input_read=4*1024**2):
 # pylint: disable=missing-docstring
 def main():
     parser = argparse.ArgumentParser(description='Calculate hash of some files',
-        epilog='Algorithm can be also set from binary name (for example call program as sha1 to use sha1 algorithm).')
+        epilog='Algorithm can be also set from program name (for example call program as sha1 to use sha1 algorithm)')
     parser.add_argument('-a', '--algorithm', default=[], action='append', choices=AVAILABLE_ALGORITHMS,
-        help='algorithm used to calculate hash')
+        help='algorithm used to calculate hash '
+             'If given more then one, then use different algorithms for different files (use first algo to first '
+             'file, second algo to second file etc. If there is more files then algorithms, last algorithm from '
+             'list is used.')
     parser.add_argument('--max_input_read', default=MAX_INPUT_READ,
         help='maximum data size for read at once')
     parser.add_argument('files', metavar='file', type=str, nargs='*',
