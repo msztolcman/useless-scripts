@@ -57,7 +57,7 @@ def main():
     parser.add_argument('--max_input_read', default=MAX_INPUT_READ,
         help='maximum data size for read at once')
     parser.add_argument('files', metavar='file', type=str, nargs='*',
-        help='list of files')
+        help='list of files (stdin by default)')
 
     args = parser.parse_args()
 
