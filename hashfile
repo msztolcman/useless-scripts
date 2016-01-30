@@ -69,7 +69,7 @@ def main():
              'If given more then one, then use different algorithms for different files (use first algo to first '
              'file, second algo to second file etc. If there is more files then algorithms, last algorithm from '
              'list is used.')
-    parser.add_argument('--max_input_read', default=MAX_INPUT_READ,
+    parser.add_argument('--max-input-read', default=MAX_INPUT_READ,
         help='maximum data size for read at once')
     parser.add_argument('files', metavar='file', type=str, nargs='*',
         help='list of files (stdin by default)')
