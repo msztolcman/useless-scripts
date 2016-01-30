@@ -86,7 +86,7 @@ def hash_file(file_path, algo='sha1', max_input_read=4*1024**2):
 
         hasher.update(data)
 
-    if file_path == '-':
+    if file_path != '-':
         fh.close()
 
     return hasher
