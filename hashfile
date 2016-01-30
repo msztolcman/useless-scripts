@@ -13,7 +13,7 @@ import os
 import sys
 import zlib
 
-__version__ = 'version 0.2'
+__version__ = 'version 0.3'
 __author__ = 'Marcin Sztolcman <marcin@urzenia.net>'
 __copyright__ = '(r) 2012'
 __program__ = 'hashfile - calculate hash of given files'
