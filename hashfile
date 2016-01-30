@@ -65,7 +65,7 @@ def _get_available_hash_algorithms():
 
 AVAILABLE_HASH_ALGORITHMS = _get_available_hash_algorithms()
 AVAILABLE_CHECKSUM_ALGORITHMS = {'crc32', 'adler32'}
-AVAILABLE_ALGORITHMS = sorted(list(AVAILABLE_HASH_ALGORITHMS | AVAILABLE_CHECKSUM_ALGORITHMS))
+AVAILABLE_ALGORITHMS = sorted(AVAILABLE_HASH_ALGORITHMS | AVAILABLE_CHECKSUM_ALGORITHMS)
 
 
 def checksum_file(file_path, algo, max_input_read=4*1024**2):
@@ -125,7 +125,6 @@ def _get_file_helpers():
     helpers = {algo: hash_file for algo in AVAILABLE_HASH_ALGORITHMS}
     helpers.update({algo: checksum_file for algo in AVAILABLE_CHECKSUM_ALGORITHMS})
     return helpers
-
 
 FILE_HELPERS = _get_file_helpers()
 
