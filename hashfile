@@ -73,7 +73,7 @@ def main():
         file = files[i]
         algo = algorithms[i] if len(algorithms) > i else algorithms[-1]
         hash = hash_file(file, algo=algo, max_input_read=args.max_input_read)
-        print('{}: {} {}'.format(algo, hash.hexdigest(), file))
+        print('%s: %s %s' % (algo, hash.hexdigest(), file))
 
 if __name__ == '__main__':
     main()
