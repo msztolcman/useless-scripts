@@ -61,7 +61,7 @@ def main():
 
     args = parser.parse_args()
 
-    if len(args.algorithm):
+    if len(args.algorithm) > 0:
         algorithms = args.algorithm
     elif os.path.basename(sys.argv[0]) in AVAILABLE_ALGORITHMS:
         algorithms = [os.path.basename(sys.argv[0]), ]
@@ -69,8 +69,7 @@ def main():
         algorithms = [DEFAULT_ALGORITHM, ]
 
     files = args.files or ['-', ]
-    for i in range(len(files)):
-        file = files[i]
+    for i, file in enumerate(files):
         algo = algorithms[i] if len(algorithms) > i else algorithms[-1]
         try:
             hash = hash_file(file, algo=algo, max_input_read=args.max_input_read)
