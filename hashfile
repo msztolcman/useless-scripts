@@ -45,13 +45,21 @@ def _get_available_algorithms():
         except AttributeError:
             available = {'md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'}
 
+    aliases = {
+        'sha1': {'DSA', 'DSA-SHA', 'dsaEncryption', 'dsaWithSHA', 'ecdsa-with-SHA1'}
+    }
+
+    for name in aliases:
+        if name in available:
+            available -= aliases[name]
+
     to_remove = set()
     for algo in available:
         lowered = algo.lower()
         if algo != lowered and lowered in available:
             to_remove.add(algo)
 
-    available = available - to_remove
+    available -= to_remove
 
     result = list(available)
     result.sort()
