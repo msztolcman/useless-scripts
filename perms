@@ -1,29 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__version__   = 'version 0.5'
-__author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
-__copyright__ = '(r) 2005-2009'
-__program__   = 'perms - tool for recursive change permissions or owner files and/or directories'
-__date__      = '2006-12-11'
-__license__   = 'GPL v.2'
+"""
+Recursively change permissions to given paths
+"""
 
-__desc__      = '''%(desc)s
-%(author)s %(copyright)s
-license: %(license)s
-version %(version)s (%(date)s)''' % {
-  'desc': __program__,
-  'author': __author__,
-  'copyright': __copyright__,
-  'license': __license__,
-  'version': __version__,
-  'date': __date__
-}
-
-STANDARD_F='644'
-STANDARD_D='755'
-
-
+from __future__ import print_function
 
 import getopt
 import grp
@@ -32,9 +14,35 @@ import os.path
 import pwd
 import sys
 
-usage = dict (
-  s = u'Usage: %(name)s [--dir-perm=perm] [--file-perm=perm] [--standard] [--both-perm=perm] [--owner=name] [--owner-affect=all|file|dir] [--group=group] [--group-affect=all|file|dir] [--omit-rootdir] [--version] [--help] directory' % dict (name=os.path.basename (sys.argv[0])),
-  l = '''Usage: %(name)s [--options] directory
+__version__ = 'version 0.6'
+__author__ = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
+__copyright__ = '(r) 2005'
+__program__ = 'perms - tool for recursive change permissions or owner files and/or directories'
+__date__ = '2006-12-11'
+__license__ = 'GPL v.2'
+
+__desc__ = '''%(desc)s
+%(author)s %(copyright)s
+license: %(license)s
+version %(version)s (%(date)s)''' % {
+    'desc': __program__,
+    'author': __author__,
+    'copyright': __copyright__,
+    'license': __license__,
+    'version': __version__,
+    'date': __date__
+}
+
+STANDARD_F = '644'
+STANDARD_D = '755'
+
+USAGE = {
+    's': (u'Usage: %(name)s [--dir-perm=perm] [--file-perm=perm] [--standard] [--both-perm=perm]'
+      u' [--owner=name] [--owner-affect=all|file|dir] [--group=group] [--group-affect=all|file|dir]'
+      u' [--omit-rootdir] [--version] [--help] directory') % {
+        'name': os.path.basename(sys.argv[0])
+    },
+    'l': '''Usage: %(name)s [--options] directory
 
 OPTIONS:
   -x|--both-perm oct_dir_file_perms
@@ -52,187 +60,236 @@ OPTIONS:
   -v|--version
       prints program name and exits
   -h|--help
-''' % dict (name=os.path.basename (sys.argv[0]))
-)
+''' % {'name': os.path.basename(sys.argv[0])},
+}
 
-class Settings (object):
-  __s = {}
-  def __setattr__ (self, k, v):
-    if self.__s.has_key (k):
-      self.__s[k] = v
-  def __getattr__ (self, k):
-    return self.__s[k]
-  def __delattr__ (self, k):
-    pass
-  def __init__ (self, **v):
-    if v is not None:
-      self.__s.update (v)
-  def __str__ (self):
-    return "\n".join ( ["%s: %s" % i for i in self.__s.items ()] )
 
-def exit (msg, code = 0):
-  print usage['s']
-  if msg:
-    print
-    print >>sys.stderr, msg
-  raise SystemExit, code
+# pylint: disable=too-few-public-methods
+class Settings(object):
+    '''
+    Container for configuration
+    '''
+    __s = {}
 
-def chmod (path, v, mode):
-  try:
-    os.chmod (path, getattr (v, mode))
-    return True
-  except OSError:
-    return False
+    def __setattr__(self, k, v):
+        if k in self.__s:
+            self.__s[k] = v
 
-def chown (path, v, mode):
-  try:
-    os.chown (path, v.uid, -1)
-    return True
-  except OSError:
-    return False
+    def __getattr__(self, k):
+        return self.__s[k]
 
-def chgrp (path, v, mode):
-  try:
-    os.chown (path, -1, v.gid)
-    return True
-  except OSError:
-    return False
+    def __delattr__(self, k):
+        pass
 
-def main ():
-  s_opt = 'd:f:o:g:a:b:vhx:rs'
-  l_opt = ('dir-perm=', 'file-perm=', 'owner=', 'group=', 'owner-affect=', 'group-affect=', 'version', 'help', 'both-perm=', 'omit-rootdir', 'standard')
-  try:
-    opts, args = getopt.gnu_getopt (sys.argv[1:], s_opt, l_opt)
-  except getopt.GetoptError, msg:
-    exit (msg, 1)
+    def __init__(self, **v):
+        if v is not None:
+            self.__s.update(v)
 
-  v = Settings (
-    path = os.getcwdu (),
-    dir = None,
-    file = None,
-    uid = None,
-    gid = None,
-    oaffect = 'all',
-    gaffect = 'all',
-    omitroot = False,
-    standard = False,
-  )
-  for o, a in opts:
-    if o in ('-d', '--dir-perm'):
-      v.dir = int (a, 8)
-    elif o in ('-f', '--file-perm'):
-      v.file = int (a, 8)
-    elif o in ('-s', '--standard'):
-      v.standard = True
-    elif o in ('-x', '--both-perm'):
-      v.file = int (a, 8)
-      v.dir  = int (a, 8)
-    elif o in ('-o', '--owner'):
-      v.uid = a.strip ()
-    elif o in ('-g', '--group'):
-      v.gid = a.strip ()
-    elif o in ('-a', '--owner-affect'):
-      if a not in ('all', 'file', 'dir'):
-        exit ('Option -a must be one of: all, file, dir.', 2)
-      v.oaffect = a
-    elif o in ('-b', '--group-affect'):
-      if a not in ('all', 'file', 'dir'):
-        exit ('Option -b must be one of: all, file, dir.', 3)
-      v.gaffect = a
-    elif o in ('-r', '--omit-rootdir'):
-      v.omitroot = True
-    elif o in ('-v', '--version'):
-      print __desc__
-      raise SystemExit, 0
-    elif o in ('-h', '--help'):
-      print usage['l']
-      raise SystemExit, 0
+    def __str__(self):
+        return "\n".join(["%s: %s" % i for i in self.__s.items()])
 
-  if len (args) >= 1:
-    v.path = os.path.expanduser (args[0])
-    v.path = os.path.abspath (v.path)
 
-  if v.uid is not None:
+def exit(msg, code=0):
+    """
+    Show usage and exit with given message and code
+    :param msg:
+    :param code:
+    :return:
+    """
+    print(USAGE['s'])
+    if msg:
+        print()
+        print(msg, file=sys.stderr)
+    raise SystemExit(code)
+
+
+def chmod(path, cfg, mode):
+    """
+    Safe chmod
+    :param path:
+    :param cfg:Settings object
+    :param mode:
+    :return:
+    """
     try:
-      v.uid = pwd.getpwnam (v.uid)[2]
-    except KeyError:
-      exit ('Cannot find user \'%s\'.' % v.uid, 3)
+        os.chmod(path, getattr(cfg, mode))
+        return True
+    except OSError:
+        return False
 
-  if v.gid is not None:
+
+# pylint: disable=unused-argument
+def chown(path, cfg, mode):
+    '''
+    Safe chown
+    :param path:
+    :param cfg:Settings object
+    :param mode:
+    :return:
+    '''
     try:
-      v.gid = grp.getgrnam (v.gid)[2]
-    except KeyError:
-      exit ('Cannot find group \'%s\'.' % v.gid, 4)
-
-  #czy ktorykolwiek tryb jest wybrany ?
-  if v.gid is None and v.uid is None and\
-      v.dir is None and v.file is None and v.standard == False:
-    exit ('Work mode must be at least one of: \'-u\', \'-g\', \'-d\', \'-f\', \'-s\' or \'-x\'.', 5)
-
-  actions = dict (
-    d = [],
-    f = []
-  )
-  if v.standard:
-    v.dir  = int (STANDARD_D, 8)
-    v.file = int (STANDARD_F, 8)
-  if v.gid is not None:
-    if v.gaffect in ('dir', 'all'):
-      actions['d'].append (chgrp)
-    if v.gaffect in ('file', 'all'):
-      actions['f'].append (chgrp)
-  if v.uid is not None:
-    if v.oaffect in ('dir', 'all'):
-      actions['d'].append (chown)
-    if v.oaffect in ('file', 'all'):
-      actions['f'].append (chown)
-  if v.dir is not None:
-    actions['d'].append (chmod)
-  if v.file is not None:
-    actions['f'].append (chmod)
+        os.chown(path, cfg.uid, -1)
+        return True
+    except OSError:
+        return False
 
 
-  #jedziemy z koksem...
-  omitted = []
+# pylint: disable=unused-argument
+def chgrp(path, cfg, mode):
+    '''
+    Safe chgrp
+    :param path:
+    :param cfg:Settings object
+    :param mode:
+    :return:
+    '''
+    try:
+        os.chown(path, -1, cfg.gid)
+        return True
+    except OSError:
+        return False
 
-  #najpierw dla katalogu nadrzednego
-  if not v.omitroot:
-    for action in actions['d']:
-      if not action (v.path, v, 'dir'):
-        omitted.append (v.path)
 
-  for root, dirs, files in os.walk (v.path):
-    #katalogi
-    for _d in dirs:
-      for action in actions['d']:
-        path = os.path.join (root, _d)
-        if not action (path, v, 'dir'):
-          omitted.append (path)
+def main():
+    """
+    Main function
+    :return:
+    """
+    s_opt = 'd:f:o:g:a:b:vhx:rs'
+    l_opt = (
+    'dir-perm=', 'file-perm=', 'owner=', 'group=', 'owner-affect=', 'group-affect=', 'version', 'help', 'both-perm=', 'omit-rootdir',
+    'standard')
+    try:
+        opts, args = getopt.gnu_getopt(sys.argv[1:], s_opt, l_opt)
+    except getopt.GetoptError as exc:
+        exit(exc, 1)
 
-    for _f in files:
-      for action in actions['f']:
-        path = os.path.join (root, _f)
-        if not action (path, v, 'file'):
-          omitted.append (path)
+    cfg = Settings(
+        path=os.getcwdu(),
+        dir=None,
+        file=None,
+        uid=None,
+        gid=None,
+        oaffect='all',
+        gaffect='all',
+        omitroot=False,
+        standard=False,
+    )
+    # pylint: disable=invalid-name
+    for o, a in opts:
+        if o in ('-d', '--dir-perm'):
+            cfg.dir = int(a, 8)
+        elif o in ('-f', '--file-perm'):
+            cfg.file = int(a, 8)
+        elif o in ('-s', '--standard'):
+            cfg.standard = True
+        elif o in ('-x', '--both-perm'):
+            cfg.file = int(a, 8)
+            cfg.dir = int(a, 8)
+        elif o in ('-o', '--owner'):
+            cfg.uid = a.strip()
+        elif o in ('-g', '--group'):
+            cfg.gid = a.strip()
+        elif o in ('-a', '--owner-affect'):
+            if a not in ('all', 'file', 'dir'):
+                exit('Option -a must be one of: all, file, dir.', 2)
+            cfg.oaffect = a
+        elif o in ('-b', '--group-affect'):
+            if a not in ('all', 'file', 'dir'):
+                exit('Option -b must be one of: all, file, dir.', 3)
+            cfg.gaffect = a
+        elif o in ('-r', '--omit-rootdir'):
+            cfg.omitroot = True
+        elif o in ('-v', '--version'):
+            print(__desc__)
+            raise SystemExit(0)
+        elif o in ('-h', '--help'):
+            print(USAGE['l'])
+            raise SystemExit(0)
 
-  if omitted:
-    print 'Failed:'
-    print "\n".join (omitted)
+    if len(args) >= 1:
+        cfg.path = os.path.expanduser(args[0])
+        cfg.path = os.path.abspath(cfg.path)
+
+    if cfg.uid is not None:
+        try:
+            cfg.uid = pwd.getpwnam(cfg.uid)[2]
+        except KeyError:
+            exit('Cannot find user \'%s\'.' % cfg.uid, 3)
+
+    if cfg.gid is not None:
+        try:
+            cfg.gid = grp.getgrnam(cfg.gid)[2]
+        except KeyError:
+            exit('Cannot find group \'%s\'.' % cfg.gid, 4)
+
+    # czy ktorykolwiek tryb jest wybrany ?
+    if cfg.gid is None and cfg.uid is None and \
+                    cfg.dir is None and cfg.file is None and cfg.standard == False:
+        exit('Work mode must be at least one of: \'-u\', \'-g\', \'-d\', \'-f\', \'-s\' or \'-x\'.', 5)
+
+    actions = {
+        'd': [],
+        'f': []
+    }
+    if cfg.standard:
+        cfg.dir = int(STANDARD_D, 8)
+        cfg.file = int(STANDARD_F, 8)
+    if cfg.gid is not None:
+        if cfg.gaffect in ('dir', 'all'):
+            actions['d'].append(chgrp)
+        if cfg.gaffect in ('file', 'all'):
+            actions['f'].append(chgrp)
+    if cfg.uid is not None:
+        if cfg.oaffect in ('dir', 'all'):
+            actions['d'].append(chown)
+        if cfg.oaffect in ('file', 'all'):
+            actions['f'].append(chown)
+    if cfg.dir is not None:
+        actions['d'].append(chmod)
+    if cfg.file is not None:
+        actions['f'].append(chmod)
+
+    # jedziemy z koksem...
+    omitted = []
+
+    # najpierw dla katalogu nadrzednego
+    if not cfg.omitroot:
+        for action in actions['d']:
+            if not action(cfg.path, cfg, 'dir'):
+                omitted.append(cfg.path)
+
+    for root, dirs, files in os.walk(cfg.path):
+        # katalogi
+        for _d in dirs:
+            for action in actions['d']:
+                path = os.path.join(root, _d)
+                if not action(path, cfg, 'dir'):
+                    omitted.append(path)
+
+        for _f in files:
+            for action in actions['f']:
+                path = os.path.join(root, _f)
+                if not action(path, cfg, 'file'):
+                    omitted.append(path)
+
+    if omitted:
+        print('Failed:')
+        print("\n".join(omitted))
 
 
 if __name__ == '__main__':
-  main ()
+    main()
 
-'''
-ChangeLog:
-2006-12-11  - v.0.5 - added support for options: -s, -r
-2006-09-15  - v.0.4 - added support for option: -x
-                    - refactorized
-2005-08-10  - v.0.3 - rewritten
-                    - added support for options: -o, -a, -g, -b
-2005-04-16          - cosmetics
-2005-03-23  - v.0.2 - clean code
-                    - cosmetics
-'''
+# ChangeLog:
+# 2016-01-31  - v.0.6 - reformatted sourcecode, more PEP8
+# 2006-12-11  - v.0.5 - added support for options: -s, -r
+# 2006-09-15  - v.0.4 - added support for option: -x
+#                     - refactorized
+# 2005-08-10  - v.0.3 - rewritten
+#                     - added support for options: -o, -a, -g, -b
+# 2005-04-16          - cosmetics
+# 2005-03-23  - v.0.2 - clean code
+#                     - cosmetics
 
 # vim: ft=python
