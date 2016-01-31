@@ -16,7 +16,7 @@ import zlib
 __version__ = 'version 0.3'
 __author__ = 'Marcin Sztolcman <marcin@urzenia.net>'
 __copyright__ = '(r) 2012'
-__program__ = 'hashfile - calculate hash of given files'
+__program__ = 'hashfile - calculate hash or checksum of given files'
 __date__ = '2012-05-22'
 __license__ = 'GPL v.2'
 
