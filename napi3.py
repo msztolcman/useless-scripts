@@ -19,6 +19,7 @@ license: %(license)s
     'date': __date__
 }
 
+import codecs
 import hashlib
 import os, os.path
 import re
@@ -66,7 +67,7 @@ def extract_subtitles(data):
     return stdout
 
 
-def get_subtitles(film, output=None):
+def get_subtitles(film, encoding, output=None):
     if not os.path.isfile(film):
         return False
 
@@ -76,10 +77,25 @@ def get_subtitles(film, output=None):
     url %= (md5, calculate_f(md5), os.name)
 
     # download and extract subtitles if found
-    data = urllib.request.urlopen(url).read()
-    data = extract_subtitles(data)
-    if not data:
+    subtitles = urllib.request.urlopen(url).read()
+    subtitles = extract_subtitles(subtitles)
+    if not subtitles:
         return False
+
+    if encoding:
+        if subtitles.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
+            subtitles = subtitles[len(codecs.BOM_UTF16_BE):]
+            encoding = 'utf-16'
+        elif subtitles.startswith(codecs.BOM_UTF8):
+            subtitles = subtitles[len(codecs.BOM_UTF8):]
+            encoding = 'utf-8'
+        elif subtitles.startswith((codecs.BOM_UTF32_BE, codecs.BOM_UTF32_LE)):
+            encoding = 'utf-32'
+
+        try:
+            subtitles = subtitles.decode(encoding)
+        except UnicodeDecodeError:
+            subtitles = subtitles.decode()
 
     # find output directory and correct subtitles filename
     dname, fname = os.path.split(film)
@@ -90,8 +106,13 @@ def get_subtitles(film, output=None):
 
     # write subtitles file in right directory
     fname = os.path.splitext(fname)[0] + '.txt'
-    with open(os.path.join(dname, fname), 'wb') as fh:
-        fh.write(data)
+
+    if encoding:
+        with open(os.path.join(dname, fname), 'w', encoding=encoding) as fh:
+            fh.write(subtitles)
+    else:
+        with open(os.path.join(dname, fname), 'wb') as fh:
+            fh.write(subtitles)
 
     return True
 
@@ -146,12 +167,14 @@ def main():
 -o|--output_dir     - specify directory when you want to save downloaded files. If not specified, try to save every subtitle in films directory
 -n|--no-validate    - if given, specified list of films will not be validated for being movie files (work only without -d parameter)
 -w|--overwrite      - if specified, existent subtitles will not be overwritten
+-e|--encoding       - convert subtitles to given encoding (default: cp1250)
+--do-not-convert    - do not convert subtitles
 --verbose           - show info about every film, even if subtitles are not found
 input1 .. inputN    - if -d is not specified, this is treaten like films files, to which you want to download subtitles. In other case, this is list of directories whis are scanned for files''' % (os.path.basename(sys.argv[0]),)
 
     # parsing getopt options
-    opts_short = 'hdo:rnw'
-    opts_long = ['help', 'directory', 'output=', 'recursive', 'no-validate', 'overwrite', 'verbose']
+    opts_short = 'hdo:rnwe:'
+    opts_long = ['help', 'directory', 'output=', 'recursive', 'no-validate', 'overwrite', 'verbose', 'encoding', 'do-not-convert']
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], opts_short, opts_long)
     except getopt.GetoptError as exc:
@@ -164,6 +187,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     validate = True
     overwrite = False
     verbose = False
+    encoding = 'cp1250'
     for o, a in opts:
         if o in ('-h', '--help'):
             print(usage)
@@ -181,6 +205,10 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
             validate = False
         elif o in ('-w', '--overwrite'):
             overwrite = True
+        elif o in ('-e', '--encoding'):
+            encoding = a.lower()
+        elif o == '--do-not-convert':
+            encoding = False
         elif o == '--verbose':
             verbose = True
 
@@ -223,7 +251,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     # download all subtitles
     found = 0
     for fname in fnames:
-        r = get_subtitles(fname, output)
+        r = get_subtitles(fname, encoding, output)
         if r:
             found += 1
             status = 'done'
