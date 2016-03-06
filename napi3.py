@@ -78,6 +78,9 @@ def get_subtitles(film, encoding, output=None):
 
     # download and extract subtitles if found
     subtitles = urllib.request.urlopen(url).read()
+    if subtitles == b'NPc0':
+        return False
+
     subtitles = extract_subtitles(subtitles)
     if not subtitles:
         return False
