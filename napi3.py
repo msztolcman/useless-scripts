@@ -29,12 +29,12 @@ import tempfile
 import urllib.request
 
 
-def calculate_md5(path):
+def napiprojekt_calculate_md5(path):
     with open(path, 'rb') as fh:
         return hashlib.md5(fh.read(10485760)).hexdigest()
 
 
-def calculate_f(md5digest):
+def napiprojekt_calculate_f(md5digest):
     idx = ( 0xe, 0x3,  0x6, 0x8, 0x2 )
     mul = (   2,   2,    5,   4,   3 )
     add = (   0, 0xd, 0x10, 0xb, 0x5 )
@@ -48,7 +48,7 @@ def calculate_f(md5digest):
     return ''.join(b)
 
 
-def extract_subtitles(data):
+def napiprojekt_extract_subtitles(data):
     # create temporary archive for 7zip
     with tempfile.NamedTemporaryFile(mode='wb', prefix='napi_') as fh:
         fh.write(data)
@@ -67,21 +67,21 @@ def extract_subtitles(data):
     return stdout
 
 
-def get_subtitles(film, encoding, output=None):
+def napiprojekt_get_subtitles(film, encoding, output=None):
     if not os.path.isfile(film):
         return False
 
-    md5 = calculate_md5(film)
+    md5 = napiprojekt_calculate_md5(film)
 
     url = 'http://napiprojekt.pl/unit_napisy/dl.php?l=PL&f=%s&t=%s&v=other&kolejka=false&nick=&pass=&napios=%s'
-    url %= (md5, calculate_f(md5), os.name)
+    url %= (md5, napiprojekt_calculate_f(md5), os.name)
 
     # download and extract subtitles if found
     subtitles = urllib.request.urlopen(url).read()
     if subtitles == b'NPc0':
         return False
 
-    subtitles = extract_subtitles(subtitles)
+    subtitles = napiprojekt_extract_subtitles(subtitles)
     if not subtitles:
         return False
 
@@ -254,7 +254,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     # download all subtitles
     found = 0
     for fname in fnames:
-        r = get_subtitles(fname, encoding, output)
+        r = napiprojekt_get_subtitles(fname, encoding, output)
         if r:
             found += 1
             status = 'done'
