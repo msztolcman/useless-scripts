@@ -50,7 +50,7 @@ def calculate_f(md5digest):
 
 def extract_subtitles(data):
     # create temporary archive for 7zip
-    with tempfile.NamedTemporaryFile(mode='wb', prefix='sub_') as fh:
+    with tempfile.NamedTemporaryFile(mode='wb', prefix='napi_') as fh:
         fh.write(data)
         fh_arch_path = fh.name
 
