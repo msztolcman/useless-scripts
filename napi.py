@@ -111,12 +111,9 @@ def napiprojekt_get_subtitles(film, dst_encoding, output=None):
     # write subtitles file in right directory
     fname = os.path.splitext(fname)[0] + '.txt'
 
-    if dst_encoding:
-        with open(os.path.join(dname, fname), 'w', encoding=dst_encoding) as fh:
-            fh.write(subtitles)
-    else:
-        with open(os.path.join(dname, fname), 'wb') as fh:
-            fh.write(subtitles)
+    write_mode = 'w' if dst_encoding else 'wb'
+    with open(os.path.join(dname, fname), write_mode, encoding=dst_encoding) as fh:
+        fh.write(subtitles)
 
     return True
 
