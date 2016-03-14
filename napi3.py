@@ -67,7 +67,7 @@ def napiprojekt_extract_subtitles(data):
     return stdout
 
 
-def napiprojekt_get_subtitles(film, encoding, output=None):
+def napiprojekt_get_subtitles(film, dst_encoding, output=None):
     if not os.path.isfile(film):
         return False
 
@@ -85,18 +85,19 @@ def napiprojekt_get_subtitles(film, encoding, output=None):
     if not subtitles:
         return False
 
-    if encoding:
+    src_encoding = None
+    if dst_encoding:
         if subtitles.startswith((codecs.BOM_UTF16_BE, codecs.BOM_UTF16_LE)):
             subtitles = subtitles[len(codecs.BOM_UTF16_BE):]
-            encoding = 'utf-16'
+            src_encoding = 'utf-16'
         elif subtitles.startswith(codecs.BOM_UTF8):
             subtitles = subtitles[len(codecs.BOM_UTF8):]
-            encoding = 'utf-8'
+            src_encoding = 'utf-8'
         elif subtitles.startswith((codecs.BOM_UTF32_BE, codecs.BOM_UTF32_LE)):
-            encoding = 'utf-32'
+            src_encoding = 'utf-32'
 
         try:
-            subtitles = subtitles.decode(encoding)
+            subtitles = subtitles.decode(src_encoding)
         except UnicodeDecodeError:
             subtitles = subtitles.decode()
 
@@ -110,8 +111,8 @@ def napiprojekt_get_subtitles(film, encoding, output=None):
     # write subtitles file in right directory
     fname = os.path.splitext(fname)[0] + '.txt'
 
-    if encoding:
-        with open(os.path.join(dname, fname), 'w', encoding=encoding) as fh:
+    if dst_encoding:
+        with open(os.path.join(dname, fname), 'w', encoding=dst_encoding) as fh:
             fh.write(subtitles)
     else:
         with open(os.path.join(dname, fname), 'wb') as fh:
