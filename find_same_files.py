@@ -69,7 +69,7 @@ def calculate_csum(path, size=0):
     csum = hashlib.md5()
     to_read = size if size > 0 else os.path.getsize(path)
 
-    with open(path) as fh:
+    with open(path, 'rb') as fh:
         while to_read > 0:
             length = max(to_read, 4 * 1024 * 1024)
             data = fh.read(length)
@@ -102,7 +102,7 @@ for root, dirs, files in os.walk(ROOT):
                 FILES[csum].append(ret)
             except KeyError:
                 FILES[csum] = [ ret, ]
-        except Exception, e:
+        except Exception as e:
             print('ERROR:', e, type(e))
 
 # jeśli były debugi, to oddzielamy od nich wyniki
