@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-__version__   = 'version 0.2'
+__version__   = 'version 0.3'
 __author__    = 'Marcin Sztolcman <marcin@urzenia.net>'
 __copyright__ = '(r) 2012'
 __program__   = 'b64 - encode/decode b64 data in the fly'
@@ -65,6 +65,9 @@ if __name__ == '__main__':
     else:
         body = open(file_, 'r').read()
 
-    print(func(body))
+    body = body.encode()
+    result = func(body).decode()
+
+    print(result)
 
 # vim: ft=python
