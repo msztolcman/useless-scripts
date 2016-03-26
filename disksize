@@ -3,10 +3,10 @@
 
 from __future__ import print_function
 
-__version__   = 'version 0.3'
+__version__   = 'version 0.4'
 __author__    = 'Marcin ``MySZ`` Sztolcman <marcin@urzenia.net>'
 __copyright__ = '(r) 2005 - 2012'
-__program__   = 'compare.py - tool for comparising directories for different or modified files and directories'
+__program__   = 'disksize - search for big files and directories'
 __date__      = '2005-08-09'
 __license__   = 'GPL v.2'
 
@@ -30,16 +30,16 @@ import os, os.path
 import re
 import sys
 
-output          = sys.stdout
-threshold       = '1M'
-show_omitted    = False
-exclude         = set ()
-follow_links    = False
-DEBUG           = False
+output = sys.stdout
+threshold = '1M'
+show_omitted = False
+exclude = set()
+follow_links = False
+DEBUG = False
 
-re_type         = type (re.compile (''))
+re_type = type(re.compile(''))
 
-def human_size (size):
+def human_size(size):
     if size < 1024:
         return '%0.2f B' % size
     elif size < 1024 ** 2:
@@ -51,54 +51,54 @@ def human_size (size):
     else:
         return '%0.2f TB' % (size / 1024.0 / 1024.0 / 1024.0 / 1024.0)
 
-def parse_threshold (thr):
-    thr = str (thr)
-    m = re.match (r'^\s*(\d+)\s*([kmg])i?b?\s*$', thr, re.I)
+def parse_threshold(thr):
+    thr = str(thr)
+    m = re.match(r'^\s*(\d+)\s*([kmg])i?b?\s*$', thr, re.I)
     if not m:
-        return int (thr)
+        return int(thr)
 
-    g = m.groups ()
+    g = m.groups()
     mn = {
         'k': 1024,
         'm': 1024 ** 2,
         'g': 1024 ** 3
     }[g[1]]
-    return int (g[0]) * mn
+    return int(g[0]) * mn
 
-def round (size, multi=4096):
+def round(size, multi=4096):
     d = size % multi
     if d:
         size += multi - d
     return size
 
-def excluded (path, exclude):
+def excluded(path, exclude):
     for exc in exclude:
-        if (isinstance (exc, str) and (path == exc or path.startswith (exc.rstrip ('/') + '/') or fnmatch.fnmatch (path, exc)))\
+        if (isinstance(exc, str) and (path == exc or path.startswith(exc.rstrip('/') + '/') or fnmatch.fnmatch(path, exc)))\
                     or\
-                (isinstance (exc, re_type) and exc.search (path)):
+                (isinstance(exc, re_type) and exc.search(path)):
             return True
     return False
 
-def debug (*msgs, **opts):
+def debug(*msgs, **opts):
     global DEBUG
-    if not DEBUG and not opts.get ('force', False):
+    if not DEBUG and not opts.get('force', False):
         return
-    print ("\n".join (msgs), file=sys.stderr)
-    if opts.get ('exit', None) is not None:
-        raise SystemExit (opts['exit'])
+    print("\n".join(msgs), file=sys.stderr)
+    if opts.get('exit', None) is not None:
+        raise SystemExit(opts['exit'])
 
-def scan_dir (path, to_skip=None):
+def scan_dir(path, to_skip=None):
     if to_skip is None:
         to_skip = []
 
     data = {}
     # iterowanie po katalogu
-    for root, dirs, files in os.walk (os.path.realpath (path)):
-        debug ('d: %s' % root)
+    for root, dirs, files in os.walk(os.path.realpath(path)):
+        debug('d: %s' % root)
 
         # sprawdzamy czy nie pomijamy katalogu (to_skip)
-        if excluded (root, to_skip):
-            debug ('skipped', '')
+        if excluded(root, to_skip):
+            debug('skipped', '')
             del dirs[:]
             continue
 
@@ -107,74 +107,74 @@ def scan_dir (path, to_skip=None):
         # zliczanie rozmiarow plikow w katalogach
         size = 0
         for file in files:
-            path = os.path.join (root, file)
-            debug ('f: %s' % path)
-            if os.path.islink (path):
-                debug ('islink', '')
+            path = os.path.join(root, file)
+            debug('f: %s' % path)
+            if os.path.islink(path):
+                debug('islink', '')
                 continue
 
             try:
-                data[root][file] = round (os.stat (path).st_size)
+                data[root][file] = round(os.stat(path).st_size)
                 size += data[root][file]
-                debug ('ok')
-            except OSError, e:
-                debug ('ERROR: %s' % e, force=True)
+                debug('ok')
+            except OSError as e:
+                debug('ERROR: %s' % e, force=True)
 
         # meta dane o katalogu
-        data[root]['.'] = { 'dirs': dirs, 'size': size, 'depth': len (root.split ('/')) - 1 }
+        data[root]['.'] = { 'dirs': dirs, 'size': size, 'depth': len(root.split('/')) - 1 }
 
-        debug ('')
+        debug('')
 
     # dodawanie rozmiarow podkatalogow do rozmiaru rodzica
-    paths = data.keys ()
-    paths.sort (key=lambda a: data[a]['.']['depth'], reverse=True)
+    paths = data.keys()
+    paths.sort(key=lambda a: data[a]['.']['depth'], reverse=True)
     for path in paths:
-        root = os.path.split (path)[0]
+        root = os.path.split(path)[0]
         if root not in data:
             continue
         data[root]['.']['size'] += data[path]['.']['size']
 
     return data
 
-def main ():
+def main():
     global show_omitted, human_size, threshold, output
-    usage = '''%s [-n|--no-human] [-o|--output -] [-t|--threshold 1M] [-s|--show-omitted] [-x|--exclude *str*] [-d|--debug] [-l|--follow-links] [-r|--exclude-regexp ^regexp$]''' % (os.path.basename (sys.argv[0]), )
+    usage = '''%s [-n|--no-human] [-o|--output -] [-t|--threshold 1M] [-s|--show-omitted] [-x|--exclude *str*] [-d|--debug] [-l|--follow-links] [-r|--exclude-regexp ^regexp$]''' % (os.path.basename(sys.argv[0]), )
     # parsowanie argumntow
     try:
         opts_short = 'hvno:t:sx:dlr:'
         opts_long  = ('help', 'version', 'no-human', 'output=', 'threshold=', 'show-omitted', 'exclude=', 'debug', 'follow-links', 'exclude-regexp=', )
-        opts, args = getopt.gnu_getopt (sys.argv[1:], opts_short, opts_long)
+        opts, args = getopt.gnu_getopt(sys.argv[1:], opts_short, opts_long)
         for o, a in opts:
             if o in ('-h', '--help'):
-                print (usage)
-                sys.exit (0)
+                print(usage)
+                sys.exit(0)
             elif o in ('-v', '--version'):
-                print ('%s (%s)' % (__version__, __date__))
-                sys.exit (0)
+                print('%s (%s)' % (__version__, __date__))
+                sys.exit(0)
             elif o in ('-n', '--no-human'):
                 human_size = lambda q: q
             elif o in ('-o', '--output') and a != '-':
-                output = open (a, 'w')
+                output = open(a, 'w')
             elif o in ('-t', '--threshold'):
-                threshold = parse_threshold (a)
+                threshold = parse_threshold(a)
             elif o in ('-s', '--show-omitted'):
                 show_omitted = True
             elif o in ('-x', '--exclude'):
-                exclude.add (a)
+                exclude.add(a)
             elif o in ('-r', '--exclude-regexp'):
-                exclude.add (re.compile (a))
+                exclude.add(re.compile(a))
             elif o in ('-d', '--debug'):
                 DEBUG = True
             elif o in ('-l', '--follow-links'):
                 follow_links = True
 
-        if len (args) < 1:
-            print ('Brak ścieżki.', file=sys.stderr)
-            sys.exit (2)
+        if len(args) < 1:
+            print('Brak ścieżki.', file=sys.stderr)
+            sys.exit(2)
 
-    except getopt.GetoptError, e:
-        print (e, file=sys.stderr)
-        sys.exit (1)
+    except getopt.GetoptError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
 
 
     # na niektórych platformach domyslnie pomijamy niektore katalogi
@@ -182,51 +182,51 @@ def main ():
         'darwin': ('/net', '/dev'),
         'linux2': ('/proc', '/dev'),
     }
-    for d in platform_exclude.get (sys.platform, ()):
-        exclude.add (d)
+    for d in platform_exclude.get(sys.platform, ()):
+        exclude.add(d)
 
     # skanowanie katalogow
     all_data = {}
     for dir in args:
-        if not os.path.isdir (dir) or excluded (dir, exclude):
+        if not os.path.isdir(dir) or excluded(dir, exclude):
             continue
-        data = scan_dir (dir, exclude)
-        all_data.update (data)
+        data = scan_dir(dir, exclude)
+        all_data.update(data)
 
-    all_omitted = set ()
-    keys = all_data.keys ()
-    keys.sort ()
+    all_omitted = set()
+    keys = all_data.keys()
+    keys.sort()
     for k in keys:
-        dirmeta = all_data[k].pop ('.')
+        dirmeta = all_data[k].pop('.')
         # pomijanie zbyt malych katalogow
         if dirmeta['size'] < threshold:
             if show_omitted:
-                all_omitted.add (k)
+                all_omitted.add(k)
             continue
 
-        print ('%s (%s)' % (k, human_size (dirmeta['size'])), file=output)
+        print('%s (%s)' % (k, human_size(dirmeta['size'])), file=output)
 
-        files = all_data[k].keys ()
-        files.sort ()
+        files = all_data[k].keys()
+        files.sort()
         for file in files:
             if all_data[k][file] < threshold:
                 if show_omitted:
-                    all_omitted.add (os.path.join (k, file))
+                    all_omitted.add(os.path.join(k, file))
                 continue
-            print ("\t%s: %s" % (file, human_size (all_data[k][file])), file=output)
-        print (file=output)
+            print("\t%s: %s" % (file, human_size(all_data[k][file])), file=output)
+        print(file=output)
 
-    print (file=output)
+    print(file=output)
     if all_omitted:
-        print ('Pominiete (rozmiar poniżej %s):' % human_size (threshold), file=output)
-        print ("\n".join (sorted (all_omitted)), file=output)
+        print('Skipped (size below %s):' % human_size(threshold), file=output)
+        print("\n".join(sorted(all_omitted)), file=output)
 
 
 if __name__ == '__main__':
     try:
-        main ()
+        main()
     except KeyboardInterrupt:
-        print ('Interrupted by user.', file=sys.stderr)
+        print('Interrupted by user.', file=sys.stderr)
 
 
 # vim: ft=python
