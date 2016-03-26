@@ -131,7 +131,8 @@ FILE_HELPERS = _get_file_helpers()
 
 # pylint: disable=missing-docstring
 def main():
-    print('It\'s old version of tool, search for new version on https://github.com/msztolcman/hashfile', file=sys.stderr)
+    print('%s is old and deprecated version of tool, search for new versions on https://github.com/msztolcman/hashfile' % sys.argv[0],
+        file=sys.stderr)
 
     parser = argparse.ArgumentParser(description='Calculate hash of some files',
         epilog='Algorithm can be also set from program name (for example call program as sha1 to use sha1 algorithm)')
