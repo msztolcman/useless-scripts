@@ -104,10 +104,8 @@ def napiprojekt_get_subtitles(film, dst_encoding, output=None):
         elif subtitles.startswith((codecs.BOM_UTF32_BE, codecs.BOM_UTF32_LE)):
             src_encoding = 'utf-32'
 
-        try:
+        if src_encoding:
             subtitles = subtitles.decode(src_encoding)
-        except UnicodeDecodeError:
-            subtitles = subtitles.decode()
 
     # find output directory and correct subtitles filename
     dname, fname = os.path.split(film)
@@ -119,9 +117,12 @@ def napiprojekt_get_subtitles(film, dst_encoding, output=None):
     # write subtitles file in right directory
     fname = os.path.splitext(fname)[0] + '.txt'
 
-    write_mode = 'w' if dst_encoding else 'wb'
-    with open(os.path.join(dname, fname), write_mode, encoding=dst_encoding) as fh:
-        fh.write(subtitles)
+    if dst_encoding and src_encoding:
+        with open(os.path.join(dname, fname), 'w', encoding=dst_encoding) as fh:
+            fh.write(subtitles)
+    else:
+        with open(os.path.join(dname, fname), 'wb') as fh:
+            fh.write(subtitles)
 
     return True
 
