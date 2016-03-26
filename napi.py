@@ -77,7 +77,12 @@ def napiprojekt_get_subtitles(film, dst_encoding, output=None):
     url %= (md5, napiprojekt_calculate_f(md5), os.name)
 
     # download and extract subtitles if found
-    subtitles = urllib.request.urlopen(url).read()
+    try:
+        subtitles = urllib.request.urlopen(url).read()
+    except urllib.error.HTTPError as exc:
+        print('%s: HTTP Error: [%s] %s' % (film, exc.code, exc.reason))
+        return False
+
     if subtitles == b'NPc0':
         return False
 
