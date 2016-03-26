@@ -29,6 +29,9 @@ import tempfile
 import urllib.request
 
 
+DEBUG = False
+
+
 def napiprojekt_calculate_md5(path):
     with open(path, 'rb') as fh:
         return hashlib.md5(fh.read(10485760)).hexdigest()
@@ -180,7 +183,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
 
     # parsing getopt options
     opts_short = 'hdo:rnwe:'
-    opts_long = ['help', 'directory', 'output=', 'recursive', 'no-validate', 'overwrite', 'verbose', 'encoding', 'do-not-convert']
+    opts_long = ['help', 'directory', 'output=', 'recursive', 'no-validate', 'overwrite', 'verbose', 'encoding', 'do-not-convert', 'debug']
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], opts_short, opts_long)
     except getopt.GetoptError as exc:
@@ -217,6 +220,9 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
             encoding = False
         elif o == '--verbose':
             verbose = True
+        elif o == '--debug':
+            global DEBUG
+            DEBUG = True
 
     # find all films
     fnames = []
@@ -257,7 +263,16 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
     # download all subtitles
     found = 0
     for fname in fnames:
-        r = napiprojekt_get_subtitles(fname, encoding, output)
+        try:
+            r = napiprojekt_get_subtitles(fname, encoding, output)
+        except Exception as exc:
+            if DEBUG:
+                import traceback
+                traceback.print_exc()
+            else:
+                print('%s error: %s' % (fname, exc), file=sys.stderr)
+            r = False
+
         if r:
             found += 1
             status = 'done'
