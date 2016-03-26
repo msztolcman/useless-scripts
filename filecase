@@ -213,7 +213,7 @@ def init ():
   l_args = ('help', 'exists=', 'recursive', 'mask=', 'regexp=', 'lower', 'upper', 'swap', 'exclude', 'size=', 'version')
   try:
     opts, args = getopt.gnu_getopt (sys.argv[1:], s_args, l_args)
-  except getopt.GetoptError, msg:
+  except getopt.GetoptError as msg:
     exit (msg, 1)
 
   # default settings
