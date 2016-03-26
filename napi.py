@@ -248,7 +248,7 @@ input1 .. inputN    - if -d is not specified, this is treaten like films files, 
         fnames = [fname for fname in fnames if not has_subtitle(fname)]
 
     if not fnames:
-        print('Cannot find any film.')
+        print('Cannot find any film.', file=sys.stderr)
         sys.exit(2)
 
     # find longest filename
