@@ -118,7 +118,7 @@ def napiprojekt_get_subtitles(film, dst_encoding, output=None):
     fname = os.path.splitext(fname)[0] + '.txt'
 
     if dst_encoding and src_encoding:
-        with open(os.path.join(dname, fname), 'w', encoding=dst_encoding) as fh:
+        with open(os.path.join(dname, fname), 'w', encoding=dst_encoding, errors='replace') as fh:
             fh.write(subtitles)
     else:
         with open(os.path.join(dname, fname), 'wb') as fh:
